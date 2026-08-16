@@ -14,7 +14,8 @@ The workable plan is a **compatibility framework**:
    `gpio_*`, `esp_wifi_*`, `nvs_*`, `esp_event_*`, `idf.py`-like CLI) so
    existing ESP-IDF knowledge and vibe-coding prompts transfer.
 4. Keep an honest feature matrix: native, subset, planned, or impossible.
-5. Make every remaining feature an agent-sized slice (vibecoding).
+5. Expose the backlog through an MCP server (`tools/pidf_mcp.py`) so
+   Cursor can vibe-code one feature at a time.
 
 ```
   app_main()  +  ESP-IDF-shaped components
@@ -70,6 +71,7 @@ Mirrors `idf.py` so muscle memory and LLM training data work:
 | `pidf.py create-component` | `idf.py create-component` | New component skeleton |
 | `pidf.py vibe status` | — | Next unimplemented feature |
 | `pidf.py vibe next` | — | Agent prompt for that feature |
+| `pidf.py mcp` | — | MCP stdio server (Cursor vibe-coding) |
 
 `PIDF_PATH` points at this repository, the same way `IDF_PATH` points at
 ESP-IDF.
@@ -168,9 +170,9 @@ today. The inventory in `tools/features.json` is the contract:
 - **impossible** — no radio, no silicon, or Espressif-proprietary. The
   row says what to use instead.
 
-Shipping the matrix, the CLI, FreeRTOS `app_main`, and one real
-component (`driver/gpio`) is the foundation. Every later feature is one
-agent turn: `pidf.py vibe next`.
+Shipping the matrix, the CLI, the MCP server, FreeRTOS `app_main`, and
+one real component (`driver/gpio`) is the foundation. Every later
+feature is one MCP `vibe_next` turn.
 
 ## Non-goals
 

@@ -8,6 +8,9 @@ Print the live table:
 ./tools/pidf.py vibe status
 ```
 
+Cursor should use the MCP server (`pidf.py mcp` / `tools/pidf_mcp.py`)
+and call `list_features` / `vibe_next` instead of parsing this file.
+
 Status values:
 
 | Status | Meaning |

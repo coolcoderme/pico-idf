@@ -1,8 +1,8 @@
 # pico-idf
 
 ESP-IDF-shaped firmware framework for the **Raspberry Pi Pico W** and
-**Pico 2 W**, including **FreeRTOS SMP** and a **vibe-coding** loop for
-the rest of the ESP-IDF feature surface.
+**Pico 2 W**, including **FreeRTOS SMP** and an **MCP server** for
+vibe-coding the rest of the ESP-IDF feature surface.
 
 ESP-IDF itself cannot run on RP2040 or RP2350. pico-idf is the
 practical plan: Pico SDK as the HAL, FreeRTOS as the RTOS, ESP-IDF
@@ -33,7 +33,8 @@ CYW43439 onboard LED.
 | HAL / radio | Raspberry Pi Pico SDK (CYW43439, lwIP, BTstack, TinyUSB, mbedTLS) |
 | RTOS | FreeRTOS SMP (RP2040, RP2350 ARM, RP2350 RISC-V) |
 | API | ESP-IDF-shaped components (`esp_err`, `esp_log`, `gpio`, later `esp_wifi` / NVS / MQTT…) |
-| CLI | `pidf.py` — `set-target`, `build`, `flash`, `monitor`, `vibe` |
+| CLI | `pidf.py` — `set-target`, `build`, `flash`, `monitor`, `vibe`, `mcp` |
+| MCP | `tools/pidf_mcp.py` — Cursor vibe-coding tools / resources / prompts |
 | Backlog | `tools/features.json` — every remaining ESP-IDF feature is one agent slice |
 
 Full write-up: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -64,15 +65,19 @@ SDK 2.3.0, FreeRTOS-Kernel, and picotool.
 - `pico2_w_riscv` — same board, Hazard3 RISC-V cores
 - `pico` / `pico2` — no radio, bring-up only
 
-## Vibe-coding the rest of ESP-IDF
+## Vibe-coding (MCP server)
+
+Cursor loads [`.cursor/mcp.json`](.cursor/mcp.json) and talks to
+`tools/pidf_mcp.py` over stdio. The host calls `vibe_next`,
+`scaffold_feature`, `set_target`, and `build` instead of guessing the
+tree.
 
 ```bash
-./tools/pidf.py vibe status   # done / partial / planned / impossible
-./tools/pidf.py vibe next     # prompt for the next planned feature
+./tools/pidf.py mcp            # stdio MCP server
+./tools/pidf.py vibe status    # same matrix, CLI form
 ```
 
-Agents implement one `planned` row at a time (component + example +
-test + matrix update). See `AGENTS.md`.
+See [docs/VIBECODING.md](docs/VIBECODING.md).
 
 ## Status of this tree
 

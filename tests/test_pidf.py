@@ -51,7 +51,7 @@ class FeaturesJsonTests(unittest.TestCase):
 
     def test_foundation_is_done(self) -> None:
         by_id = {row["id"]: row for row in self.data["features"]}
-        for key in ("cli", "esp_err", "esp_log", "freertos-smp", "gpio"):
+        for key in ("cli", "mcp-server", "esp_err", "esp_log", "freertos-smp", "gpio"):
             self.assertEqual(by_id[key]["status"], "done", key)
 
     def test_impossible_rows_stay_impossible(self) -> None:

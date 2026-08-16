@@ -4,6 +4,9 @@ This repository is an **ESP-IDF-shaped** firmware framework for
 Raspberry Pi Pico W and Pico 2 W. It is not ESP-IDF. Read
 `docs/ARCHITECTURE.md` and `docs/VIBECODING.md` before changing code.
 
+Vibe-coding is the **MCP server** at `tools/pidf_mcp.py` (also
+`pidf.py mcp`). Prefer those tools over ad-hoc shell when they exist.
+
 ## Hard rules
 
 - Do not vendor or copy ESP-IDF `.c` / proprietary headers into this tree.
@@ -18,7 +21,7 @@ Raspberry Pi Pico W and Pico 2 W. It is not ESP-IDF. Read
 
 ## How to add a feature
 
-1. `./tools/pidf.py vibe next` — implement that id, or pick a `planned` row.
+1. MCP `vibe_next` (or `./tools/pidf.py vibe next`) — implement that id.
 2. Create `components/<name>/` with `CMakeLists.txt` calling
    `idf_component_register`.
 3. Add `examples/<group>/<name>/` that only includes public headers.

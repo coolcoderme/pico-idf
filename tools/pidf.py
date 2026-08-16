@@ -34,6 +34,9 @@ CONFIG_LOG_DEFAULT_LEVEL=3
 CONFIG_BLINK_GPIO={blink_gpio}
 """
 
+PREFERRED_FEATURES = ["nvs", "wifi", "esp_netif", "http-client", "mqtt", "ble", "uart"]
+ALLOWED_FEATURE_STATUS = {"done", "partial", "planned", "impossible"}
+
 
 def pidf_path() -> Path:
     env = os.environ.get("PIDF_PATH")
@@ -89,6 +92,127 @@ def current_target(proj: Path) -> str:
     return cfg.get("CONFIG_PIDF_TARGET", "pico_w")
 
 
+def write_target(proj: Path, target: str) -> Path:
+    if target not in TARGETS:
+        raise ValueError(f"unknown target {target!r}; choose from: {', '.join(TARGETS)}")
+    spec = TARGETS[target]
+    blink = "32" if spec["wireless"] else "25"
+    path = sdkconfig_path(proj)
+    path.write_text(
+        DEFAULT_SDKCONFIG.format(target=target, board=spec["board"], blink_gpio=blink),
+        encoding="utf-8",
+    )
+    return path
+
+
+def set_sdkconfig_value(proj: Path, key: str, value: str) -> Path:
+    path = sdkconfig_path(proj)
+    if not path.exists():
+        write_target(proj, current_target(proj))
+    if not key.startswith("CONFIG_"):
+        key = "CONFIG_" + key
+    lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+    replaced = False
+    out = []
+    for line in lines:
+        if line.startswith(key + "="):
+            out.append(f"{key}={value}")
+            replaced = True
+        else:
+            out.append(line)
+    if not replaced:
+        out.append(f"{key}={value}")
+    path.write_text("\n".join(out) + "\n", encoding="utf-8")
+    return path
+
+
+def run_build(proj: Path, fresh: bool = False, jobs: int | None = None) -> tuple[int, str]:
+    bdir = build_dir(proj)
+    if fresh:
+        shutil.rmtree(bdir, ignore_errors=True)
+    bdir.mkdir(parents=True, exist_ok=True)
+    cmake = ["cmake", "-S", str(proj), "-B", str(bdir), *cmake_args(proj)]
+    log: list[str] = ["+ " + " ".join(cmake)]
+    proc = subprocess.run(cmake, text=True, capture_output=True, check=False)
+    log.append(proc.stdout)
+    log.append(proc.stderr)
+    if proc.returncode != 0:
+        return proc.returncode, "\n".join(log)
+    njob = jobs or os.cpu_count() or 2
+    build = ["cmake", "--build", str(bdir), "-j", str(njob)]
+    log.append("+ " + " ".join(build))
+    proc = subprocess.run(build, text=True, capture_output=True, check=False)
+    log.append(proc.stdout)
+    log.append(proc.stderr)
+    return proc.returncode, "\n".join(log)
+
+
+def feature_by_id(feature_id: str) -> dict:
+    data = load_features()
+    for row in data["features"]:
+        if row["id"] == feature_id:
+            return row
+    raise KeyError(feature_id)
+
+
+def planned_features() -> list[dict]:
+    planned = [r for r in load_features()["features"] if r["status"] == "planned"]
+    planned.sort(
+        key=lambda r: (
+            PREFERRED_FEATURES.index(r["id"]) if r["id"] in PREFERRED_FEATURES else 100,
+            r["id"],
+        )
+    )
+    return planned
+
+
+def next_planned_feature(feature_id: str | None = None) -> dict:
+    if feature_id:
+        return feature_by_id(feature_id)
+    planned = planned_features()
+    if not planned:
+        raise KeyError("no planned features left")
+    return planned[0]
+
+
+def feature_implement_prompt(feature: dict) -> str:
+    return (
+        f"Implement pico-idf feature `{feature['id']}` ({feature['title']}).\n\n"
+        f"ESP-IDF API: {feature['esp_idf']}\n"
+        f"Pico backend: {feature['backend']}\n"
+        f"Current status: {feature['status']}\n"
+        f"Notes: {feature.get('notes') or '(none)'}\n\n"
+        "Follow AGENTS.md and docs/VIBECODING.md:\n"
+        "- Clean-room implementation (do not copy ESP-IDF sources).\n"
+        "- Public headers use the ESP-IDF names listed above.\n"
+        "- Add examples/<group>/<id>/ that starts from app_main.\n"
+        "- Host-test portable logic; cross-compile for pico_w and pico2_w.\n"
+        "- Update tools/features.json status to done or partial.\n"
+        "- Leave impossible rows impossible.\n"
+    )
+
+
+def update_feature_status(feature_id: str, status: str) -> dict:
+    if status not in ALLOWED_FEATURE_STATUS:
+        raise ValueError(f"status must be one of {sorted(ALLOWED_FEATURE_STATUS)}")
+    data = load_features()
+    found = None
+    for row in data["features"]:
+        if row["id"] == feature_id:
+            found = row
+            break
+    if found is None:
+        raise KeyError(feature_id)
+    if found["status"] == "impossible" and status == "done":
+        raise ValueError(
+            f"{feature_id} is impossible on Pico hardware; "
+            f"do not mark it done. {found.get('notes') or ''}"
+        )
+    found["status"] = status
+    features_path().write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    return found
+
+
 def cmd_version(_: argparse.Namespace) -> int:
     print(f"pidf.py {VERSION}")
     print(f"PIDF_PATH={pidf_path()}")
@@ -96,18 +220,13 @@ def cmd_version(_: argparse.Namespace) -> int:
 
 
 def cmd_set_target(args: argparse.Namespace) -> int:
-    target = args.target
-    if target not in TARGETS:
-        print(f"unknown target {target!r}; choose from: {', '.join(TARGETS)}", file=sys.stderr)
+    try:
+        path = write_target(project_dir(), args.target)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
         return 2
-    proj = project_dir()
-    spec = TARGETS[target]
-    blink = "32" if spec["wireless"] else "25"
-    text = DEFAULT_SDKCONFIG.format(
-        target=target, board=spec["board"], blink_gpio=blink
-    )
-    sdkconfig_path(proj).write_text(text, encoding="utf-8")
-    print(f"Target set to {target} (PICO_BOARD={spec['board']}) in {sdkconfig_path(proj)}")
+    spec = TARGETS[args.target]
+    print(f"Target set to {args.target} (PICO_BOARD={spec['board']}) in {path}")
     return 0
 
 
@@ -135,21 +254,9 @@ def build_dir(proj: Path) -> Path:
 
 
 def cmd_build(args: argparse.Namespace) -> int:
-    proj = project_dir()
-    bdir = build_dir(proj)
-    bdir.mkdir(parents=True, exist_ok=True)
-    cmake = ["cmake", "-S", str(proj), "-B", str(bdir), *cmake_args(proj)]
-    if args.fresh:
-        shutil.rmtree(bdir, ignore_errors=True)
-        bdir.mkdir(parents=True, exist_ok=True)
-    print("+", " ".join(cmake))
-    rc = subprocess.call(cmake)
-    if rc != 0:
-        return rc
-    jobs = args.jobs or os.cpu_count() or 2
-    build = ["cmake", "--build", str(bdir), "-j", str(jobs)]
-    print("+", " ".join(build))
-    return subprocess.call(build)
+    rc, log = run_build(project_dir(), fresh=args.fresh, jobs=args.jobs)
+    print(log)
+    return rc
 
 
 def find_uf2(proj: Path) -> Path | None:
@@ -198,27 +305,16 @@ def cmd_monitor(args: argparse.Namespace) -> int:
 
 def cmd_menuconfig(args: argparse.Namespace) -> int:
     proj = project_dir()
-    path = sdkconfig_path(proj)
-    if not path.exists():
-        cmd_set_target(argparse.Namespace(target=current_target(proj)))
     if args.set:
         key, _, value = args.set.partition("=")
+        set_sdkconfig_value(proj, key, value)
         if not key.startswith("CONFIG_"):
             key = "CONFIG_" + key
-        lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
-        replaced = False
-        out = []
-        for line in lines:
-            if line.startswith(key + "="):
-                out.append(f"{key}={value}")
-                replaced = True
-            else:
-                out.append(line)
-        if not replaced:
-            out.append(f"{key}={value}")
-        path.write_text("\n".join(out) + "\n", encoding="utf-8")
         print(f"set {key}={value}")
         return 0
+    path = sdkconfig_path(proj)
+    if not path.exists():
+        write_target(proj, current_target(proj))
     print(path.read_text(encoding="utf-8"))
     print("# pidf.py menuconfig --set KEY=value   (full TUI is planned)")
     return 0
@@ -302,43 +398,19 @@ def cmd_vibe_status(args: argparse.Namespace) -> int:
 
 
 def cmd_vibe_next(args: argparse.Namespace) -> int:
-    data = load_features()
-    preferred = ["nvs", "wifi", "esp_netif", "http-client", "mqtt", "ble", "uart"]
-    planned = [r for r in data["features"] if r["status"] == "planned"]
-    planned.sort(
-        key=lambda r: (
-            preferred.index(r["id"]) if r["id"] in preferred else 100,
-            r["id"],
-        )
-    )
-    if args.id:
-        match = [r for r in data["features"] if r["id"] == args.id]
-        if not match:
-            print(f"unknown feature id {args.id!r}", file=sys.stderr)
-            return 2
-        feature = match[0]
-    elif not planned:
-        print("no planned features left")
-        return 0
-    else:
-        feature = planned[0]
-    prompt = f"""Implement pico-idf feature `{feature['id']}` ({feature['title']}).
-
-ESP-IDF API: {feature['esp_idf']}
-Pico backend: {feature['backend']}
-Current status: {feature['status']}
-Notes: {feature.get('notes') or '(none)'}
-
-Follow AGENTS.md and docs/VIBECODING.md:
-- Clean-room implementation (do not copy ESP-IDF sources).
-- Public headers use the ESP-IDF names listed above.
-- Add examples/<group>/<id>/ that starts from app_main.
-- Host-test portable logic; cross-compile for pico_w and pico2_w.
-- Update tools/features.json status to done or partial.
-- Leave impossible rows impossible.
-"""
-    print(prompt)
+    try:
+        feature = next_planned_feature(args.id)
+    except KeyError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2 if args.id else 0
+    print(feature_implement_prompt(feature))
     return 0
+
+
+def cmd_mcp(_: argparse.Namespace) -> int:
+    from pidf_mcp import serve
+
+    return serve()
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -392,6 +464,9 @@ def build_parser() -> argparse.ArgumentParser:
     nxt = vs.add_parser("next", help="print the agent prompt for the next planned feature")
     nxt.add_argument("id", nargs="?")
     nxt.set_defaults(func=cmd_vibe_next)
+
+    s = sub.add_parser("mcp", help="run the pico-idf MCP server on stdio")
+    s.set_defaults(func=cmd_mcp)
 
     return p
 

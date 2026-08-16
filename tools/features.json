@@ -3,13 +3,22 @@
   "targets": ["pico_w", "pico2_w", "pico2_w_riscv", "pico", "pico2"],
   "features": [
     {
+      "id": "mcp-server",
+      "group": "tooling",
+      "title": "pico-idf MCP server (vibe-coding)",
+      "esp_idf": "(none — Cursor / MCP hosts)",
+      "backend": "tools/pidf_mcp.py stdio JSON-RPC",
+      "status": "done",
+      "notes": "tools, resources, and prompts for feature matrix, target, build, scaffold"
+    },
+    {
       "id": "cli",
       "group": "tooling",
       "title": "pidf.py CLI (idf.py analogue)",
       "esp_idf": "idf.py",
       "backend": "tools/pidf.py",
       "status": "done",
-      "notes": "set-target, build, flash, monitor, menuconfig, create-*, vibe"
+      "notes": "set-target, build, flash, monitor, menuconfig, create-*, vibe, mcp"
     },
     {
       "id": "cmake-components",

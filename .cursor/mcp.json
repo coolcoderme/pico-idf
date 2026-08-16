@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "pico-idf": {
+      "command": "python3",
+      "args": ["tools/pidf_mcp.py"],
+      "env": {
+        "PIDF_PATH": "${workspaceFolder}"
+      }
+    }
+  }
+}
