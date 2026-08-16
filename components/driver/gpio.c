@@ -1,7 +1,6 @@
 #include "driver/gpio.h"
 
 #include "hardware/gpio.h"
-#include "pico/stdlib.h"
 
 #if defined(PIDF_CYW43) || defined(CYW43_WL_GPIO_LED_PIN)
 #include "pico/cyw43_arch.h"

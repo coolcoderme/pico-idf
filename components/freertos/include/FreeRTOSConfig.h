@@ -6,12 +6,9 @@
 /* SMP FreeRTOSConfig for RP2040 / RP2350. Values follow the official
  * Raspberry Pi Pico + FreeRTOS-Kernel ports. */
 
-#ifndef TICK_TYPE_WIDTH_32_BITS
-#define TICK_TYPE_WIDTH_32_BITS 2
-#endif
-#ifndef configTICK_TYPE_WIDTH_IN_BITS
-#define configTICK_TYPE_WIDTH_IN_BITS TICK_TYPE_WIDTH_32_BITS
-#endif
+/* FreeRTOS-Kernel V11 uses 1 for 32-bit ticks. Do not also set
+ * configUSE_16_BIT_TICKS — the two knobs are mutually exclusive. */
+#define configTICK_TYPE_WIDTH_IN_BITS 1
 
 #define configUSE_PREEMPTION                    1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
@@ -20,7 +17,6 @@
 #define configMAX_PRIORITIES                    24
 #define configMINIMAL_STACK_SIZE                256
 #define configMAX_TASK_NAME_LEN                 16
-#define configUSE_16_BIT_TICKS                  0
 #define configIDLE_SHOULD_YIELD                 1
 #define configUSE_TASK_NOTIFICATIONS            1
 #define configTASK_NOTIFICATION_ARRAY_ENTRIES   3
@@ -102,6 +98,13 @@
 #ifdef __riscv
 #define configISR_STACK_SIZE_WORDS              256
 #endif
+
+/* RP2350 ARM (Cortex-M33) port requires these. Harmless on RP2040. */
+#define configENABLE_FPU                        1
+#define configENABLE_MPU                        0
+#define configENABLE_TRUSTZONE                  0
+#define configRUN_FREERTOS_SECURE_ONLY          1
+#define configMAX_SYSCALL_INTERRUPT_PRIORITY    16
 
 #define configASSERT(x)                         if ((x) == 0) { portDISABLE_INTERRUPTS(); for (;;) {} }
 

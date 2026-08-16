@@ -66,7 +66,8 @@ function(idf_component_register)
     if(ARG_PRIV_INCLUDE_DIRS)
         target_include_directories(${_comp} PRIVATE ${ARG_PRIV_INCLUDE_DIRS})
     endif()
-    target_link_libraries(${_comp} PUBLIC pico_stdlib)
+    # Headers only — do not pull pico_stdlib sources into every component.
+    target_link_libraries(${_comp} PUBLIC pico_base_headers)
     if(ARG_REQUIRES)
         target_link_libraries(${_comp} PUBLIC ${ARG_REQUIRES})
     endif()
@@ -76,6 +77,12 @@ function(idf_component_register)
 endfunction()
 
 macro(project name)
+    # FreeRTOS-Kernel and the Pico SDK also call project(). Only the
+    # application project should bootstrap pico-idf.
+    if(PIDF_PROJECT_READY)
+        # Keep CMake happy if a nested CMakeLists expects `project()`.
+    else()
+    set(PIDF_PROJECT_READY TRUE)
     _project(${name} C CXX ASM)
     pico_sdk_init()
 
@@ -137,4 +144,5 @@ macro(project name)
     pico_enable_stdio_usb(${name} 1)
     pico_enable_stdio_uart(${name} 0)
     pico_add_extra_outputs(${name})
+    endif()
 endmacro()

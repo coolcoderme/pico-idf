@@ -1,2 +1,2 @@
 #pragma once
-#include "event_groups.h"
+#include_next "event_groups.h"

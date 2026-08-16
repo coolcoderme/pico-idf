@@ -1,2 +1,2 @@
 #pragma once
-#include "FreeRTOS.h"
+#include_next "FreeRTOS.h"

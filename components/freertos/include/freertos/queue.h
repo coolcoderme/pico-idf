@@ -1,2 +1,2 @@
 #pragma once
-#include "queue.h"
+#include_next "queue.h"

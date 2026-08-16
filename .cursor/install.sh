@@ -50,7 +50,13 @@ if [ ! -d "${FREERTOS_KERNEL_PATH}/.git" ]; then
     sudo mkdir -p "${FREERTOS_KERNEL_PATH}"
     sudo chown -R "$(id -u):$(id -g)" "${FREERTOS_KERNEL_PATH}"
     git clone --depth 1 --branch "${FREERTOS_KERNEL_REF}" \
-        https://github.com/FreeRTOS/FreeRTOS-Kernel.git "${FREERTOS_KERNEL_PATH}"
+        https://github.com/raspberrypi/FreeRTOS-Kernel.git "${FREERTOS_KERNEL_PATH}"
+fi
+# Official FreeRTOS-Kernel keeps RP2350 ports in a submodule; the
+# Raspberry Pi fork vendors RP2040 + RP2350 ARM/RISC-V together.
+if [ -f "${FREERTOS_KERNEL_PATH}/.gitmodules" ]; then
+    git -C "${FREERTOS_KERNEL_PATH}" submodule update --init --depth 1 \
+        portable/ThirdParty/Community-Supported-Ports || true
 fi
 export FREERTOS_KERNEL_PATH
 
