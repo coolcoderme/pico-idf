@@ -73,7 +73,7 @@ def tool_vibe_next(id: str | None = None) -> dict:
             "feature": feature,
             "prompt": pidf.feature_implement_prompt(feature),
             "rules": [
-                "Do not copy ESP-IDF sources.",
+                "Do not copy ESP-IDF or ESP-Claw sources.",
                 "Keep void app_main(void) on FreeRTOS.",
                 "Never mark an impossible row done.",
                 "Cross-compile for pico_w and pico2_w.",
@@ -217,11 +217,23 @@ def tool_scaffold_feature(id: str) -> dict:
 def tool_get_rules() -> dict:
     root = pidf.pidf_path()
     chunks = []
-    for rel in ("AGENTS.md", "docs/COMPATIBILITY.md", "docs/VIBECODING.md"):
+    for rel in (
+        "AGENTS.md",
+        "docs/COMPATIBILITY.md",
+        "docs/VIBECODING.md",
+        "docs/CLAW.md",
+    ):
         path = root / rel
         if path.exists():
             chunks.append(f"# {rel}\n\n{path.read_text(encoding='utf-8')}")
     return _text("\n\n".join(chunks))
+
+
+def tool_list_claw_caps() -> dict:
+    path = pidf.pidf_path() / "tools" / "claw_caps.json"
+    if not path.exists():
+        return _text("tools/claw_caps.json missing", is_error=True)
+    return _json(json.loads(path.read_text(encoding="utf-8")))
 
 
 def tool_list_examples() -> dict:
@@ -396,6 +408,16 @@ TOOLS: dict[str, tuple[Callable[..., dict], dict]] = {
             "inputSchema": {"type": "object", "properties": {}},
         },
     ),
+    "list_claw_caps": (
+        tool_list_claw_caps,
+        {
+            "description": (
+                "List ESP-Claw-shaped pico-idf capabilities (gpio, agent, …) "
+                "and which are done vs planned. Clean-room subset; not ESP-Claw sources."
+            ),
+            "inputSchema": {"type": "object", "properties": {}},
+        },
+    ),
 }
 
 
@@ -433,6 +455,18 @@ def _resource_list() -> list[dict]:
             "name": "MCP vibe-coding guide",
             "mimeType": "text/markdown",
         },
+        {
+            "uri": "pidf://docs/claw",
+            "name": "ESP-Claw mapping",
+            "mimeType": "text/markdown",
+            "description": "Clean-room Pico subset of ESP-Claw ideas",
+        },
+        {
+            "uri": "pidf://claw/caps",
+            "name": "Claw capabilities",
+            "mimeType": "application/json",
+            "description": "Built-in claw caps and status",
+        },
     ]
 
 
@@ -469,6 +503,14 @@ def _resource_read(uri: str) -> dict:
         "pidf://docs/vibecoding": (
             "text/markdown",
             (root / "docs" / "VIBECODING.md").read_text(encoding="utf-8"),
+        ),
+        "pidf://docs/claw": (
+            "text/markdown",
+            (root / "docs" / "CLAW.md").read_text(encoding="utf-8"),
+        ),
+        "pidf://claw/caps": (
+            "application/json",
+            (root / "tools" / "claw_caps.json").read_text(encoding="utf-8"),
         ),
     }
     if uri.startswith("pidf://features/"):
@@ -519,6 +561,17 @@ def _prompt_list() -> list[dict]:
                 {"name": "id", "description": "Feature id", "required": True}
             ],
         },
+        {
+            "name": "explain_claw",
+            "description": "Explain the Pico-sized ESP-Claw mapping and what is out of scope",
+            "arguments": [
+                {
+                    "name": "id",
+                    "description": "Optional claw feature id (claw-lua, claw-im, …)",
+                    "required": False,
+                }
+            ],
+        },
     ]
 
 
@@ -544,6 +597,23 @@ def _prompt_get(name: str, arguments: dict | None) -> dict:
             f"ESP-IDF API: {feature['esp_idf']}\n"
             f"Pico backend: {feature['backend']}\n"
             f"Notes: {feature.get('notes') or '(none)'}\n"
+        )
+    elif name == "explain_claw":
+        docs = (pidf.pidf_path() / "docs" / "CLAW.md").read_text(encoding="utf-8")
+        fid = args.get("id")
+        extra = ""
+        if fid:
+            feature = pidf.feature_by_id(fid)
+            extra = (
+                f"\n\nRequested row `{feature['id']}` is {feature['status']}.\n"
+                f"{feature.get('notes') or ''}\n"
+            )
+        text = (
+            "pico-idf claw is a clean-room Pico subset of ESP-Claw ideas. "
+            "Do not copy espressif/esp-claw sources. Do not claim Lua, IM, "
+            "or cloud LLM work until those feature rows are done.\n\n"
+            + docs
+            + extra
         )
     else:
         raise KeyError(name)
@@ -590,9 +660,10 @@ def _handle(message: dict) -> dict | None:
                 },
                 "serverInfo": {"name": SERVER_NAME, "version": SERVER_VERSION},
                 "instructions": (
-                    "pico-idf MCP: ESP-IDF-shaped firmware for Pico W and Pico 2 W. "
+                    "pico-idf MCP: ESP-IDF-shaped firmware for Pico W and Pico 2 W, "
+                    "plus an ESP-Claw-shaped opt-in edge-agent subset. "
                     "Call vibe_next, then implement the Pico backend, then build. "
-                    "Do not copy ESP-IDF sources. Impossible rows stay impossible."
+                    "Do not copy ESP-IDF or ESP-Claw sources. Impossible rows stay impossible."
                 ),
             }
         )

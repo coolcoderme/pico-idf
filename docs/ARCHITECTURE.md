@@ -117,7 +117,7 @@ Each ESP-IDF component becomes a pico-idf component with:
   `impossible`).
 - An example and a vibe-coding recipe.
 
-Do **not** vendor ESP-IDF sources. Clean-room headers plus Pico
+Do **not** vendor ESP-IDF or ESP-Claw sources. Clean-room headers plus Pico
 implementations keep licensing simple (this repo is MIT; Pico SDK is
 BSD-3; FreeRTOS is MIT).
 
@@ -157,6 +157,13 @@ hardware, 802.15.4, Ethernet MAC unless an external PHY is added).
 Pico's unique block — **PIO** — is a first-class pico-idf component.
 ESP-IDF has no PIO. Vibe-coding prompts should prefer PIO when an
 ESP-IDF peripheral is `impossible`.
+
+### 8. ESP-Claw-shaped edge agent (opt-in)
+
+`components/claw` is a Pico-sized mapping of ESP-Claw ideas (capabilities,
+events, memory, local agent, device MCP). It is **not** linked into
+blink; apps `REQUIRES claw`. Lua, IM, and cloud LLM remain planned.
+Details: [CLAW.md](CLAW.md).
 
 ## What "all ESP-IDF features" actually means
 

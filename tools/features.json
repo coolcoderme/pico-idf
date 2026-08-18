@@ -523,6 +523,69 @@
       "backend": "optional RP2350 PSRAM",
       "status": "impossible",
       "notes": "Pico W has no extra PSRAM. Pico 2 W boards may; treat as Pico extension."
+    },
+    {
+      "id": "claw-runtime",
+      "group": "claw",
+      "title": "ESP-Claw-shaped runtime (caps, events, memory, local agent)",
+      "esp_idf": "ESP-Claw claw_cap / claw_event_router / claw_memory / claw_core (inspired, not copied)",
+      "backend": "components/claw + examples/claw/edge_agent",
+      "status": "done",
+      "notes": "Pico subset: JSON-ish cap calls, RAM notes, keyword agent, USB claw> REPL. Not full ESP-Claw."
+    },
+    {
+      "id": "claw-sched",
+      "group": "claw",
+      "title": "Claw scheduler",
+      "esp_idf": "ESP-Claw cap_scheduler (inspired)",
+      "backend": "FreeRTOS software timers posting claw events",
+      "status": "done",
+      "notes": "Periodic jobs only; no cron expressions"
+    },
+    {
+      "id": "claw-mcp-device",
+      "group": "claw",
+      "title": "On-device MCP (capabilities as tools)",
+      "esp_idf": "ESP-Claw cap_mcp_server (inspired)",
+      "backend": "USB-CDC JSON-RPC lines via claw_mcp_handle_line",
+      "status": "partial",
+      "notes": "initialize / tools/list / tools/call / ping. Not a full MCP SDK."
+    },
+    {
+      "id": "claw-lua",
+      "group": "claw",
+      "title": "On-device Lua",
+      "esp_idf": "ESP-Claw cap_lua",
+      "backend": "none yet (RAM)",
+      "status": "planned",
+      "notes": "Pico W cannot host ESP-Claw's Lua + driver set. Event rules substitute for now."
+    },
+    {
+      "id": "claw-im",
+      "group": "claw",
+      "title": "Instant messaging channels",
+      "esp_idf": "ESP-Claw cap_im_platform",
+      "backend": "lwIP + TLS after wifi",
+      "status": "planned",
+      "notes": "Telegram/Feishu/etc. need Wi-Fi. USB REPL is the local stand-in."
+    },
+    {
+      "id": "claw-llm",
+      "group": "claw",
+      "title": "Cloud / HTTP LLM agent path",
+      "esp_idf": "ESP-Claw cap_llm_config / agent loop",
+      "backend": "http-client + user endpoint in sdkconfig",
+      "status": "planned",
+      "notes": "Blocked on wifi + http-client. Local keyword agent works offline."
+    },
+    {
+      "id": "claw-skill",
+      "group": "claw",
+      "title": "Skills / board manager / HTTP settings UI",
+      "esp_idf": "ESP-Claw claw_skill / cap_boards / HTTP UI",
+      "backend": "http-server + littlefs (later)",
+      "status": "planned",
+      "notes": "ESP-Claw wants FATFS SYSTEM/DATA partitions; Pico will use LittleFS."
     }
   ]
 }

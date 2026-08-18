@@ -11,7 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 TARGETS = {
     "pico_w": {"board": "pico_w", "platform": None, "wireless": True},
@@ -176,6 +176,11 @@ def next_planned_feature(feature_id: str | None = None) -> dict:
 
 
 def feature_implement_prompt(feature: dict) -> str:
+    names = (
+        "Public headers use the claw_* APIs in docs/CLAW.md (inspired names, original code)."
+        if feature.get("group") == "claw"
+        else "Public headers use the ESP-IDF names listed above."
+    )
     return (
         f"Implement pico-idf feature `{feature['id']}` ({feature['title']}).\n\n"
         f"ESP-IDF API: {feature['esp_idf']}\n"
@@ -183,8 +188,8 @@ def feature_implement_prompt(feature: dict) -> str:
         f"Current status: {feature['status']}\n"
         f"Notes: {feature.get('notes') or '(none)'}\n\n"
         "Follow AGENTS.md and docs/VIBECODING.md:\n"
-        "- Clean-room implementation (do not copy ESP-IDF sources).\n"
-        "- Public headers use the ESP-IDF names listed above.\n"
+        "- Clean-room implementation (do not copy ESP-IDF or ESP-Claw sources).\n"
+        f"- {names}\n"
         "- Add examples/<group>/<id>/ that starts from app_main.\n"
         "- Host-test portable logic; cross-compile for pico_w and pico2_w.\n"
         "- Update tools/features.json status to done or partial.\n"

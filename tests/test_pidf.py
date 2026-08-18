@@ -51,8 +51,24 @@ class FeaturesJsonTests(unittest.TestCase):
 
     def test_foundation_is_done(self) -> None:
         by_id = {row["id"]: row for row in self.data["features"]}
-        for key in ("cli", "mcp-server", "esp_err", "esp_log", "freertos-smp", "gpio"):
+        for key in (
+            "cli",
+            "mcp-server",
+            "esp_err",
+            "esp_log",
+            "freertos-smp",
+            "gpio",
+            "claw-runtime",
+            "claw-sched",
+        ):
             self.assertEqual(by_id[key]["status"], "done", key)
+
+    def test_claw_rows_are_honest(self) -> None:
+        by_id = {row["id"]: row for row in self.data["features"]}
+        self.assertEqual(by_id["claw-mcp-device"]["status"], "partial")
+        self.assertEqual(by_id["claw-lua"]["status"], "planned")
+        self.assertEqual(by_id["claw-im"]["status"], "planned")
+        self.assertEqual(by_id["claw-llm"]["status"], "planned")
 
     def test_impossible_rows_stay_impossible(self) -> None:
         by_id = {row["id"]: row for row in self.data["features"]}
@@ -151,6 +167,60 @@ class HostCTests(unittest.TestCase):
             proc = subprocess.run([str(out)], text=True, capture_output=True, check=False)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
             self.assertIn("ok", proc.stdout)
+
+    def test_claw_runtime_host(self) -> None:
+        cc = "gcc"
+        claw = ROOT / "components" / "claw"
+        srcs = [
+            claw / "json_mini.c",
+            claw / "lock.c",
+            claw / "cap.c",
+            claw / "event.c",
+            claw / "memory.c",
+            claw / "core.c",
+            claw / "sched.c",
+            claw / "stubs.c",
+            claw / "mcp.c",
+            claw / "builtins.c",
+            claw / "runtime.c",
+            claw / "repl.c",
+            ROOT / "components" / "esp_common" / "esp_err.c",
+            ROOT / "components" / "log" / "esp_log.c",
+            ROOT / "tests" / "host" / "claw_host_stubs.c",
+            ROOT / "tests" / "host" / "test_claw.c",
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "test_claw"
+            cmd = [
+                cc,
+                "-std=c11",
+                "-DPIDF_HOST_TEST=1",
+                "-I",
+                str(claw / "include"),
+                "-I",
+                str(claw),
+                "-I",
+                str(ROOT / "components" / "esp_common" / "include"),
+                "-I",
+                str(ROOT / "components" / "log" / "include"),
+                "-I",
+                str(ROOT / "components" / "driver" / "include"),
+                *[str(p) for p in srcs],
+                "-o",
+                str(out),
+            ]
+            proc = subprocess.run(cmd, text=True, capture_output=True, check=False)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            proc = subprocess.run([str(out)], text=True, capture_output=True, check=False)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertIn("ok", proc.stdout)
+
+    def test_claw_example_exists(self) -> None:
+        example = ROOT / "examples" / "claw" / "edge_agent"
+        self.assertTrue((example / "CMakeLists.txt").exists())
+        self.assertTrue((example / "main" / "app_main.c").exists())
+        cmake = (example / "main" / "CMakeLists.txt").read_text(encoding="utf-8")
+        self.assertIn("REQUIRES claw", cmake)
 
 
 if __name__ == "__main__":

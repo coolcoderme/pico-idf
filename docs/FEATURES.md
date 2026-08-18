@@ -42,3 +42,11 @@ Suggested implementation order after this foundation:
 7. `ota` + `littlefs` + `vfs`
 8. `provisioning` (softAP, not SmartConfig)
 9. PIO extras: `rmt`, `i2s`, `pcnt`
+
+ESP-Claw-shaped work (opt-in, not linked into blink):
+
+- **done:** `claw-runtime`, `claw-sched` — caps, events, RAM memory, local agent, USB REPL
+- **partial:** `claw-mcp-device` — JSON-RPC lines over USB-CDC
+- **planned:** `claw-lua`, `claw-im`, `claw-llm`, `claw-skill` (blocked on RAM / Wi-Fi)
+
+See [docs/CLAW.md](CLAW.md).

@@ -45,6 +45,7 @@ PyPI dependency. Logs go to stderr; stdout is protocol only.
 | `create_project` / `create_component` | New `app_main` app or component |
 | `get_rules` | AGENTS.md + compatibility constraints |
 | `list_examples` | Example list |
+| `list_claw_caps` | ESP-Claw-shaped builtin caps (done vs planned) |
 
 `set_feature_status` refuses `impossible` → `done`. That is how ESP-NOW,
 ESP-MESH, SmartConfig, Thread, and touch stay honest.
@@ -58,12 +59,15 @@ ESP-MESH, SmartConfig, Thread, and touch stay honest.
 - `pidf://docs/agents`
 - `pidf://docs/compatibility`
 - `pidf://docs/vibecoding`
+- `pidf://docs/claw`
+- `pidf://claw/caps`
 
 ## Prompts
 
 - `implement_feature` — next (or named) planned slice
 - `port_esp_idf_app` — rewrite an ESP-IDF `app_main` for Pico
 - `explain_impossible` — why a row cannot exist on this silicon
+- `explain_claw` — Pico subset vs full ESP-Claw
 
 ## Agent loop
 

@@ -33,6 +33,7 @@ CYW43439 onboard LED.
 | HAL / radio | Raspberry Pi Pico SDK (CYW43439, lwIP, BTstack, TinyUSB, mbedTLS) |
 | RTOS | FreeRTOS SMP (RP2040, RP2350 ARM, RP2350 RISC-V) |
 | API | ESP-IDF-shaped components (`esp_err`, `esp_log`, `gpio`, later `esp_wifi` / NVS / MQTT…) |
+| Claw | Opt-in ESP-Claw-shaped edge agent (`components/claw`) — see [docs/CLAW.md](docs/CLAW.md) |
 | CLI | `pidf.py` — `set-target`, `build`, `flash`, `monitor`, `vibe`, `mcp` |
 | MCP | `tools/pidf_mcp.py` — Cursor vibe-coding tools / resources / prompts |
 | Backlog | `tools/features.json` — every remaining ESP-IDF feature is one agent slice |
@@ -40,6 +41,7 @@ CYW43439 onboard LED.
 Full write-up: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 Feature inventory: [docs/FEATURES.md](docs/FEATURES.md).
 Vibe-coding loop: [docs/VIBECODING.md](docs/VIBECODING.md).
+ESP-Claw mapping: [docs/CLAW.md](docs/CLAW.md).
 What will never be 1:1: [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
 ## Quick start
@@ -87,6 +89,9 @@ Foundation is in:
 - FreeRTOS SMP boot into `app_main`
 - `esp_err`, `esp_log`, `esp_event` (subset), `driver/gpio`
 - `examples/get-started/blink`
+- ESP-Claw-shaped opt-in stack: `components/claw` +
+  `examples/claw/edge_agent` (caps, events, RAM memory, local agent,
+  USB REPL / device MCP). Lua, IM, and cloud LLM stay `planned`.
 
 Wi-Fi, NVS, HTTP, MQTT, BLE, OTA, and the rest are `planned` rows —
 that is intentional. The plan is to finish them through the vibe loop

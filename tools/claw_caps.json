@@ -1,0 +1,14 @@
+{
+  "note": "Clean-room pico-idf claw caps. Not ESP-Claw sources.",
+  "caps": [
+    {"id": "gpio", "status": "done", "summary": "Set or read GPIO; pin 32 is the W-board LED"},
+    {"id": "system", "status": "done", "summary": "Uptime, heap, capability count"},
+    {"id": "time", "status": "done", "summary": "Uptime in milliseconds"},
+    {"id": "memory", "status": "partial", "summary": "RAM session notes; NVS persistence planned"},
+    {"id": "event", "status": "done", "summary": "Post events or add router rules"},
+    {"id": "agent", "status": "partial", "summary": "Local keyword agent; cloud LLM planned"},
+    {"id": "sched", "status": "done", "summary": "Periodic FreeRTOS-timer jobs that post events"},
+    {"id": "lua", "status": "planned", "summary": "Lua VM — Pico W SRAM cannot host ESP-Claw's Lua + drivers"},
+    {"id": "im", "status": "planned", "summary": "Instant messaging — needs Wi-Fi + TLS"}
+  ]
+}

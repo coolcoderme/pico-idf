@@ -10,6 +10,8 @@ Vibe-coding is the **MCP server** at `tools/pidf_mcp.py` (also
 ## Hard rules
 
 - Do not vendor or copy ESP-IDF `.c` / proprietary headers into this tree.
+- Do not vendor or copy ESP-Claw sources. `components/claw` is a Pico-sized
+  clean-room subset; see `docs/CLAW.md`.
 - Do not mark a `tools/features.json` row `done` unless an example builds.
 - Do not implement ESP-NOW, ESP-WIFI-MESH, SmartConfig, Thread/Zigbee,
   capacitive touch, TWAI, or eFuse as if the Pico had that silicon.

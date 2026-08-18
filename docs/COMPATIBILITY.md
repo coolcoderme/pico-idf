@@ -16,6 +16,8 @@ compatibility with ESP32.
 - `nvs_*` key-value API (planned)
 - `esp_event_loop_create_default` / `esp_event_handler_register`
 - `esp_http_client`, `httpd`, MQTT, mDNS, SNTP (planned, over lwIP)
+- ESP-Claw-shaped `claw_*` subset: caps, events, RAM memory, local agent,
+  USB REPL / device MCP (`components/claw`; see [CLAW.md](CLAW.md))
 
 ## Deliberately different
 
@@ -31,6 +33,7 @@ compatibility with ESP32.
 | ESP-NOW / ESP-MESH / ESP-LR | Not implementable; use UDP/MQTT/softAP |
 | Thread / Zigbee | No 802.15.4 radio |
 | `esp_wifi_set_protocol(WIFI_PROTOCOL_LR)` | 802.11n only |
+| ESP-Claw Lua + Telegram + 8 MB PSRAM boards | Pico subset: USB REPL, keyword agent, RAM notes |
 
 ## Will not compile unchanged
 

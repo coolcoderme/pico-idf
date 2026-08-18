@@ -95,6 +95,7 @@ class PidfMcpTests(unittest.TestCase):
             "set_target",
             "build",
             "get_rules",
+            "list_claw_caps",
         ):
             self.assertIn(needed, names)
 
@@ -120,18 +121,41 @@ class PidfMcpTests(unittest.TestCase):
         resources = self.client.call("resources/list")["result"]["resources"]
         uris = {r["uri"] for r in resources}
         self.assertIn("pidf://features", uris)
+        self.assertIn("pidf://docs/claw", uris)
+        self.assertIn("pidf://claw/caps", uris)
         read = self.client.call("resources/read", {"uri": "pidf://features"})
         data = json.loads(read["result"]["contents"][0]["text"])
         self.assertIn("features", data)
         prompts = self.client.call("prompts/list")["result"]["prompts"]
         names = {p["name"] for p in prompts}
         self.assertIn("implement_feature", names)
+        self.assertIn("explain_claw", names)
         got = self.client.call(
             "prompts/get",
             {"name": "implement_feature", "arguments": {"id": "wifi"}},
         )
         text = got["result"]["messages"][0]["content"]["text"]
         self.assertIn("wifi", text)
+
+    def test_claw_surface(self) -> None:
+        out = self._tool("list_features", group="claw")
+        payload = json.loads(out["text"])
+        ids = {r["id"] for r in payload["features"]}
+        self.assertIn("claw-runtime", ids)
+        self.assertTrue(all(r["group"] == "claw" for r in payload["features"]))
+        caps = json.loads(self._tool("list_claw_caps")["text"])
+        cap_ids = {c["id"] for c in caps["caps"]}
+        self.assertIn("gpio", cap_ids)
+        self.assertIn("lua", cap_ids)
+        claw_doc = self.client.call("resources/read", {"uri": "pidf://docs/claw"})
+        self.assertIn("ESP-Claw", claw_doc["result"]["contents"][0]["text"])
+        prompt = self.client.call(
+            "prompts/get",
+            {"name": "explain_claw", "arguments": {"id": "claw-lua"}},
+        )
+        text = prompt["result"]["messages"][0]["content"]["text"]
+        self.assertIn("do not copy", text.lower())
+        self.assertIn("claw-lua", text)
 
     def test_set_target_on_temp_project(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -171,6 +195,10 @@ class PidfMcpTests(unittest.TestCase):
             finally:
                 if proc.stdin:
                     proc.stdin.close()
+                if proc.stdout:
+                    proc.stdout.close()
+                if proc.stderr:
+                    proc.stderr.close()
                 proc.kill()
                 proc.wait(timeout=5)
 
