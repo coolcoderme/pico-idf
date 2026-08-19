@@ -1,43 +1,37 @@
 # Compatibility promises
 
-pico-idf aims for **source-level familiarity**, not ABI or silicon
-compatibility with ESP32.
+pico-idf now aims for an **ESP-Claw-shaped** edge agent on Pico W /
+Pico 2 W, not an ESP-IDF API port.
 
-## Compatible on purpose
+## Compatible on purpose (ESP-Claw ideas)
 
-- `esp_err_t` / `ESP_OK` / `ESP_ERR_*` and `ESP_ERROR_CHECK`
-- `ESP_LOGI` / `W` / `E` / `D` / `V`
-- `void app_main(void)` started as a FreeRTOS task
-- `idf_component_register(...)` and `sdkconfig` `CONFIG_*` names
-- `pidf.py` subcommands that match `idf.py`
-- GPIO, UART, I2C, SPI, ADC, PWM call shapes
-- `esp_wifi_init` / `set_mode` / `set_config` / `start` / `connect`
-  (planned, over CYW43439)
-- `nvs_*` key-value API (planned)
-- `esp_event_loop_create_default` / `esp_event_handler_register`
-- `esp_http_client`, `httpd`, MQTT, mDNS, SNTP (planned, over lwIP)
-- ESP-Claw-shaped `claw_*` subset: caps, events, RAM memory, local agent,
-  USB REPL / device MCP (`components/claw`; see [CLAW.md](CLAW.md))
+- Capability registry / invoke (`claw_cap_register` / `claw_cap_call`)
+- Event bus + router rules (`claw_event_post` / `claw_event_add_rule`)
+- RAM structured memory (`claw_memory_*`)
+- Local keyword agent (`claw_core_submit`)
+- Periodic scheduler (`claw_sched_every_ms`)
+- USB `claw>` REPL and JSON-RPC device MCP
+- `void app_main(void)` on FreeRTOS (boot contract for the example)
 
-## Deliberately different
+## Deliberately different from full ESP-Claw
 
-| ESP-IDF | pico-idf |
+| ESP-Claw (Espressif boards) | pico-idf |
 |---|---|
-| `idf.py set-target esp32s3` | `pidf.py set-target pico_w` / `pico2_w` |
-| Partition CSV + esptool | UF2 + picotool; reserved flash tail for NVS/OTA |
-| Wi-Fi MAC in ROM/blob | CYW43439 firmware via Pico SDK |
-| Bluedroid / NimBLE | BTstack (Bluedroid-shaped wrapper later) |
-| RMT / PCNT silicon | PIO programs |
-| ULP coprocessor | PIO + second core |
-| eFuse | RP2350 OTP only; none on RP2040 |
-| ESP-NOW / ESP-MESH / ESP-LR | Not implementable; use UDP/MQTT/softAP |
-| Thread / Zigbee | No 802.15.4 radio |
-| `esp_wifi_set_protocol(WIFI_PROTOCOL_LR)` | 802.11n only |
-| ESP-Claw Lua + Telegram + 8 MB PSRAM boards | Pico subset: USB REPL, keyword agent, RAM notes |
+| ESP-IDF + 8 MB flash / 8 MB PSRAM class boards | Pico SDK + FreeRTOS on 264–520 KB SRAM |
+| `cap_lua` + Lua drivers | Planned; Pico W cannot host the full VM + driver set |
+| Telegram / Feishu / QQ IM | Planned over CYW43439 + TLS; USB REPL is the stand-in |
+| Cloud LLM HTTP agent | Planned; local keyword agent works offline |
+| FATFS SYSTEM/DATA + board-manager web UI | LittleFS later (`claw-skill`) |
+| On-device MCP SDK | USB-CDC JSON-RPC subset (`initialize`, `tools/list`, `tools/call`, `ping`) |
 
-## Will not compile unchanged
+## Not in this tree
 
-ESP-IDF examples that include `soc/rtc.h`, `esp_mac.h` chip-id helpers,
-Xtensa/ESP-RISC-V intrinsics, or `sdkconfig` options such as
-`CONFIG_ESP32_WIFI_IRAM_OPT` need a Pico pass. The vibe-coding loop is
-the intended way to port them one example at a time.
+ESP-IDF feature rows (`esp_wifi`, `nvs`, `mqtt`, `driver/uart`, ESP-NOW,
+ESP-MESH, SmartConfig, Thread, touch, TWAI, eFuse, …) were removed from
+`tools/features.json`. Do not re-add them. If claw later needs Wi-Fi or
+flash, implement a Pico SDK backend inside `components/claw` (or a
+private helper), not an ESP-IDF-shaped public API.
+
+ESP-Claw examples that assume Espressif partitions, Board Manager, or
+PSRAM will not compile unchanged. Implement Pico-sized analogues one
+`claw-*` row at a time.

@@ -1,42 +1,33 @@
 # pico-idf
 
-ESP-IDF-shaped firmware framework for the **Raspberry Pi Pico W** and
-**Pico 2 W**, including **FreeRTOS SMP** and an **MCP server** for
-vibe-coding the rest of the ESP-IDF feature surface.
+ESP-Claw-shaped edge agent for the **Raspberry Pi Pico W** and
+**Pico 2 W**: capabilities, events, on-device memory, a local agent,
+a USB `claw>` REPL, and a vibe-coding MCP server.
 
-ESP-IDF itself cannot run on RP2040 or RP2350. pico-idf is the
-practical plan: Pico SDK as the HAL, FreeRTOS as the RTOS, ESP-IDF
-names as the API, and an honest matrix for everything else.
+This is **not** ESP-IDF and **not** a port of Espressif's
+[ESP-Claw](https://github.com/espressif/esp-claw) sources. The feature
+matrix is claw-only.
 
 ```c
 void app_main(void)
 {
-    gpio_reset_pin(CONFIG_BLINK_GPIO);
-    gpio_set_direction(CONFIG_BLINK_GPIO, GPIO_MODE_OUTPUT);
-    while (1) {
-        gpio_set_level(CONFIG_BLINK_GPIO, 1);
-        ESP_LOGI("blink", "LED on");
-        vTaskDelay(pdMS_TO_TICKS(250));
-        gpio_set_level(CONFIG_BLINK_GPIO, 0);
-        vTaskDelay(pdMS_TO_TICKS(250));
-    }
+    ESP_ERROR_CHECK(claw_runtime_init());
+    ESP_ERROR_CHECK(claw_repl_start());
 }
 ```
 
-That is the same shape as an ESP-IDF app. On Pico W, pin 32 is the
-CYW43439 onboard LED.
+On Pico W, GPIO 32 is the CYW43439 onboard LED (`PIDF_GPIO_WL_LED`).
 
 ## Plan (short)
 
 | Layer | What we use |
 |---|---|
-| HAL / radio | Raspberry Pi Pico SDK (CYW43439, lwIP, BTstack, TinyUSB, mbedTLS) |
+| HAL / radio | Raspberry Pi Pico SDK (CYW43439, lwIP, TinyUSB, mbedTLS) |
 | RTOS | FreeRTOS SMP (RP2040, RP2350 ARM, RP2350 RISC-V) |
-| API | ESP-IDF-shaped components (`esp_err`, `esp_log`, `gpio`, later `esp_wifi` / NVS / MQTT…) |
-| Claw | Opt-in ESP-Claw-shaped edge agent (`components/claw`) — see [docs/CLAW.md](docs/CLAW.md) |
+| Product | ESP-Claw-shaped `components/claw` — see [docs/CLAW.md](docs/CLAW.md) |
 | CLI | `pidf.py` — `set-target`, `build`, `flash`, `monitor`, `vibe`, `mcp` |
 | MCP | `tools/pidf_mcp.py` — Cursor vibe-coding tools / resources / prompts |
-| Backlog | `tools/features.json` — every remaining ESP-IDF feature is one agent slice |
+| Backlog | `tools/features.json` — remaining **ESP-Claw** rows only |
 
 Full write-up: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 Feature inventory: [docs/FEATURES.md](docs/FEATURES.md).
@@ -50,6 +41,7 @@ What will never be 1:1: [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 export PIDF_PATH=$PWD
 export PICO_SDK_PATH=/opt/pico-sdk
 export FREERTOS_KERNEL_PATH=/opt/FreeRTOS-Kernel
+export PIDF_PROJECT=$PIDF_PATH/examples/claw/edge_agent
 
 ./tools/pidf.py set-target pico_w    # or pico2_w, pico2_w_riscv
 ./tools/pidf.py build
@@ -59,6 +51,15 @@ export FREERTOS_KERNEL_PATH=/opt/FreeRTOS-Kernel
 
 On Debian/Ubuntu, `.cursor/install.sh` installs the ARM toolchain, Pico
 SDK 2.3.0, FreeRTOS-Kernel, and picotool.
+
+USB-CDC prompt:
+
+```
+claw> help
+claw> led on
+claw> agent remember picnic
+claw> cap list
+```
 
 ## Targets
 
@@ -71,8 +72,8 @@ SDK 2.3.0, FreeRTOS-Kernel, and picotool.
 
 Cursor loads [`.cursor/mcp.json`](.cursor/mcp.json) and talks to
 `tools/pidf_mcp.py` over stdio. The host calls `vibe_next`,
-`scaffold_feature`, `set_target`, and `build` instead of guessing the
-tree.
+`scaffold_feature`, `set_target`, and `build` for the next **claw**
+row (`claw-lua`, `claw-im`, …).
 
 ```bash
 ./tools/pidf.py mcp            # stdio MCP server
@@ -83,16 +84,13 @@ See [docs/VIBECODING.md](docs/VIBECODING.md).
 
 ## Status of this tree
 
-Foundation is in:
+Ships today:
 
 - `pidf.py` and the component CMake project
 - FreeRTOS SMP boot into `app_main`
-- `esp_err`, `esp_log`, `esp_event` (subset), `driver/gpio`
-- `examples/get-started/blink`
-- ESP-Claw-shaped opt-in stack: `components/claw` +
+- ESP-Claw-shaped stack: `components/claw` +
   `examples/claw/edge_agent` (caps, events, RAM memory, local agent,
-  USB REPL / device MCP). Lua, IM, and cloud LLM stay `planned`.
+  USB REPL / device MCP)
 
-Wi-Fi, NVS, HTTP, MQTT, BLE, OTA, and the rest are `planned` rows —
-that is intentional. The plan is to finish them through the vibe loop
-instead of pretending a full ESP-IDF port exists today.
+Still `planned` on the claw matrix: Lua, IM, cloud LLM, skills UI.
+ESP-IDF APIs are out of scope.

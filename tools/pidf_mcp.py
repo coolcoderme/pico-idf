@@ -2,8 +2,8 @@
 """pico-idf MCP server (stdio JSON-RPC).
 
 This is the vibe-coding surface: Cursor and other MCP hosts call tools
-to read the feature matrix, scaffold the next ESP-IDF-shaped component,
-set the Pico W / Pico 2 W target, and build firmware.
+to read the ESP-Claw feature matrix, extend components/claw, set the
+Pico W / Pico 2 W target, and build firmware.
 
 No third-party MCP SDK — stdio is newline-delimited JSON-RPC 2.0.
 Logs go to stderr only; stdout is protocol messages.
@@ -73,8 +73,9 @@ def tool_vibe_next(id: str | None = None) -> dict:
             "feature": feature,
             "prompt": pidf.feature_implement_prompt(feature),
             "rules": [
-                "Do not copy ESP-IDF or ESP-Claw sources.",
+                "Do not copy ESP-Claw or ESP-IDF sources.",
                 "Keep void app_main(void) on FreeRTOS.",
+                "Implement claw_* APIs only; do not add ESP-IDF feature rows.",
                 "Never mark an impossible row done.",
                 "Cross-compile for pico_w and pico2_w.",
             ],
@@ -161,54 +162,25 @@ def tool_scaffold_feature(id: str) -> dict:
             f"{id} is impossible on Pico hardware. {feature.get('notes') or ''}",
             is_error=True,
         )
-    name = id.replace("-", "_")
-    dest = pidf.pidf_path() / "components" / name
-    dest.mkdir(parents=True, exist_ok=True)
-    (dest / "include").mkdir(exist_ok=True)
-    (dest / "CMakeLists.txt").write_text(
-        f'idf_component_register(SRCS "{name}.c" INCLUDE_DIRS "include" REQUIRES esp_common)\n',
-        encoding="utf-8",
-    )
-    (dest / f"{name}.c").write_text(
-        f'#include "{name}.h"\n\n/* TODO: Pico backend for {feature["esp_idf"]} */\n',
-        encoding="utf-8",
-    )
-    (dest / "include" / f"{name}.h").write_text(
-        "#pragma once\n#include \"esp_err.h\"\n\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n\n"
-        f"/* ESP-IDF-shaped API for {feature['title']} */\n\n"
-        "#ifdef __cplusplus\n}\n#endif\n",
-        encoding="utf-8",
-    )
-    example = pidf.pidf_path() / "examples" / feature["group"] / name
-    example.mkdir(parents=True, exist_ok=True)
-    (example / "main").mkdir(exist_ok=True)
-    (example / "CMakeLists.txt").write_text(
-        "cmake_minimum_required(VERSION 3.13)\n"
-        "include($ENV{PIDF_PATH}/tools/cmake/project.cmake)\n"
-        f"project({name})\n",
-        encoding="utf-8",
-    )
-    (example / "main" / "CMakeLists.txt").write_text(
-        'idf_component_register(SRCS "main.c" INCLUDE_DIRS ".")\n',
-        encoding="utf-8",
-    )
-    (example / "main" / "main.c").write_text(
-        '#include "esp_log.h"\n\n'
-        f'static const char *TAG = "{name}";\n\n'
-        "void app_main(void)\n{\n"
-        f'    ESP_LOGI(TAG, "TODO: {feature["title"]}");\n'
-        "}\n",
-        encoding="utf-8",
-    )
-    (example / "sdkconfig.defaults").write_text(
-        'CONFIG_PIDF_TARGET="pico_w"\nCONFIG_FREERTOS_SMP=y\n',
-        encoding="utf-8",
+    if feature.get("group") != "claw":
+        return _text(
+            f"{id} is not an ESP-Claw feature. The matrix is claw-only.",
+            is_error=True,
+        )
+    dest = pidf.pidf_path() / "components" / "claw"
+    example = pidf.pidf_path() / "examples" / "claw" / "edge_agent"
+    notes = (
+        f"Extend existing sources under {dest} for `{id}` "
+        f"({feature['title']}). Do not create an ESP-IDF component. "
+        f"Keep {example} building."
     )
     return _json(
         {
             "feature": feature,
             "component": str(dest),
             "example": str(example),
+            "created": False,
+            "notes": notes,
             "prompt": pidf.feature_implement_prompt(feature),
         }
     )
@@ -252,7 +224,7 @@ TOOLS: dict[str, tuple[Callable[..., dict], dict]] = {
         tool_list_features,
         {
             "description": (
-                "List pico-idf ESP-IDF feature rows and their status "
+                "List ESP-Claw feature rows and their status "
                 "(done, partial, planned, impossible)."
             ),
             "inputSchema": {
@@ -270,7 +242,7 @@ TOOLS: dict[str, tuple[Callable[..., dict], dict]] = {
     "get_feature": (
         tool_get_feature,
         {
-            "description": "Get one feature-matrix row by id (for example nvs, wifi, gpio).",
+            "description": "Get one claw feature-matrix row by id (for example claw-lua, claw-im).",
             "inputSchema": {
                 "type": "object",
                 "properties": {"id": {"type": "string"}},
@@ -282,7 +254,7 @@ TOOLS: dict[str, tuple[Callable[..., dict], dict]] = {
         tool_vibe_next,
         {
             "description": (
-                "Return the next planned ESP-IDF-shaped feature and a ready-to-run "
+                "Return the next planned ESP-Claw feature and a ready-to-run "
                 "implementation prompt. Optional id selects a specific row."
             ),
             "inputSchema": {
@@ -384,8 +356,8 @@ TOOLS: dict[str, tuple[Callable[..., dict], dict]] = {
         tool_scaffold_feature,
         {
             "description": (
-                "Create the component + example skeleton for a planned feature, "
-                "then return the implementation prompt."
+                "Describe how to extend components/claw for a planned claw "
+                "feature. Does not create ESP-IDF components."
             ),
             "inputSchema": {
                 "type": "object",
@@ -427,7 +399,7 @@ def _resource_list() -> list[dict]:
             "uri": "pidf://features",
             "name": "Feature matrix",
             "mimeType": "application/json",
-            "description": "All ESP-IDF-shaped features and their Pico status",
+            "description": "All ESP-Claw features and their Pico status",
         },
         {
             "uri": "pidf://target",
@@ -534,29 +506,18 @@ def _prompt_list() -> list[dict]:
     return [
         {
             "name": "implement_feature",
-            "description": "Implement the next (or named) planned pico-idf feature",
+            "description": "Implement the next (or named) planned ESP-Claw feature",
             "arguments": [
                 {
                     "name": "id",
-                    "description": "Feature id (default: next planned)",
+                    "description": "Feature id (default: next planned claw-* row)",
                     "required": False,
                 }
             ],
         },
         {
-            "name": "port_esp_idf_app",
-            "description": "Port an ESP-IDF app_main sketch onto Pico W / Pico 2 W",
-            "arguments": [
-                {
-                    "name": "goal",
-                    "description": "What the firmware should do",
-                    "required": True,
-                }
-            ],
-        },
-        {
             "name": "explain_impossible",
-            "description": "Explain why an ESP-IDF feature cannot run on Pico and the substitute",
+            "description": "Explain why a claw feature cannot be a full ESP-Claw module on Pico",
             "arguments": [
                 {"name": "id", "description": "Feature id", "required": True}
             ],
@@ -580,23 +541,15 @@ def _prompt_get(name: str, arguments: dict | None) -> dict:
     if name == "implement_feature":
         feature = pidf.next_planned_feature(args.get("id"))
         text = pidf.feature_implement_prompt(feature)
-    elif name == "port_esp_idf_app":
-        goal = args.get("goal", "blink an LED")
-        text = (
-            f"Port this ESP-IDF-style application to pico-idf on Pico W / Pico 2 W:\n\n"
-            f"{goal}\n\n"
-            "Use void app_main(void), FreeRTOS, ESP_LOGI, and existing pico-idf "
-            "components. Check pidf://features before inventing APIs. If the user "
-            "asks for ESP-NOW, ESP-MESH, SmartConfig, Thread, or touch, explain "
-            "the substitute from the compatibility doc instead of faking it."
-        )
     elif name == "explain_impossible":
         feature = pidf.feature_by_id(args["id"])
+        analogue = feature.get("esp_claw") or feature.get("esp_idf") or "(none)"
         text = (
             f"Feature `{feature['id']}` is {feature['status']}.\n"
-            f"ESP-IDF API: {feature['esp_idf']}\n"
+            f"ESP-Claw analogue: {analogue}\n"
             f"Pico backend: {feature['backend']}\n"
             f"Notes: {feature.get('notes') or '(none)'}\n"
+            "This matrix is ESP-Claw only. Do not implement ESP-IDF APIs.\n"
         )
     elif name == "explain_claw":
         docs = (pidf.pidf_path() / "docs" / "CLAW.md").read_text(encoding="utf-8")
@@ -660,10 +613,10 @@ def _handle(message: dict) -> dict | None:
                 },
                 "serverInfo": {"name": SERVER_NAME, "version": SERVER_VERSION},
                 "instructions": (
-                    "pico-idf MCP: ESP-IDF-shaped firmware for Pico W and Pico 2 W, "
-                    "plus an ESP-Claw-shaped opt-in edge-agent subset. "
-                    "Call vibe_next, then implement the Pico backend, then build. "
-                    "Do not copy ESP-IDF or ESP-Claw sources. Impossible rows stay impossible."
+                    "pico-idf MCP: ESP-Claw-shaped edge agent for Pico W and Pico 2 W. "
+                    "The feature matrix is claw-only (no ESP-IDF rows). "
+                    "Call vibe_next, then extend components/claw, then build. "
+                    "Do not copy ESP-Claw or ESP-IDF sources. Impossible rows stay impossible."
                 ),
             }
         )

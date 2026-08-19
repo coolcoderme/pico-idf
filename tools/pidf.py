@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""pidf.py — ESP-IDF-shaped CLI for pico-idf."""
+"""pidf.py — ESP-Claw CLI for pico-idf."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 
 TARGETS = {
     "pico_w": {"board": "pico_w", "platform": None, "wireless": True},
@@ -34,7 +34,7 @@ CONFIG_LOG_DEFAULT_LEVEL=3
 CONFIG_BLINK_GPIO={blink_gpio}
 """
 
-PREFERRED_FEATURES = ["nvs", "wifi", "esp_netif", "http-client", "mqtt", "ble", "uart"]
+PREFERRED_FEATURES = ["claw-lua", "claw-mcp-device", "claw-im", "claw-llm", "claw-skill"]
 ALLOWED_FEATURE_STATUS = {"done", "partial", "planned", "impossible"}
 
 
@@ -53,7 +53,7 @@ def project_dir() -> Path:
     marker = cwd / "CMakeLists.txt"
     if marker.exists() and "project.cmake" in marker.read_text(encoding="utf-8"):
         return cwd
-    example = pidf_path() / "examples" / "get-started" / "blink"
+    example = pidf_path() / "examples" / "claw" / "edge_agent"
     return example
 
 
@@ -176,22 +176,19 @@ def next_planned_feature(feature_id: str | None = None) -> dict:
 
 
 def feature_implement_prompt(feature: dict) -> str:
-    names = (
-        "Public headers use the claw_* APIs in docs/CLAW.md (inspired names, original code)."
-        if feature.get("group") == "claw"
-        else "Public headers use the ESP-IDF names listed above."
-    )
+    analogue = feature.get("esp_claw") or feature.get("esp_idf") or "(none)"
     return (
-        f"Implement pico-idf feature `{feature['id']}` ({feature['title']}).\n\n"
-        f"ESP-IDF API: {feature['esp_idf']}\n"
+        f"Implement pico-idf ESP-Claw feature `{feature['id']}` ({feature['title']}).\n\n"
+        f"ESP-Claw analogue: {analogue}\n"
         f"Pico backend: {feature['backend']}\n"
         f"Current status: {feature['status']}\n"
         f"Notes: {feature.get('notes') or '(none)'}\n\n"
         "Follow AGENTS.md and docs/VIBECODING.md:\n"
-        "- Clean-room implementation (do not copy ESP-IDF or ESP-Claw sources).\n"
-        f"- {names}\n"
-        "- Add examples/<group>/<id>/ that starts from app_main.\n"
-        "- Host-test portable logic; cross-compile for pico_w and pico2_w.\n"
+        "- Clean-room implementation (do not copy ESP-Claw or ESP-IDF sources).\n"
+        "- Public headers use the claw_* APIs in docs/CLAW.md (inspired names, original code).\n"
+        "- Extend components/claw; do not add ESP-IDF feature rows or components.\n"
+        "- Keep examples/claw/edge_agent working; host-test portable logic.\n"
+        "- Cross-compile for pico_w and pico2_w.\n"
         "- Update tools/features.json status to done or partial.\n"
         "- Leave impossible rows impossible.\n"
     )
@@ -336,15 +333,18 @@ def cmd_create_project(args: argparse.Namespace) -> int:
         encoding="utf-8",
     )
     (dest / "main" / "CMakeLists.txt").write_text(
-        "idf_component_register(SRCS \"main.c\" INCLUDE_DIRS \".\")\n",
+        "idf_component_register(SRCS \"main.c\" INCLUDE_DIRS \".\" REQUIRES claw)\n",
         encoding="utf-8",
     )
     (dest / "main" / "main.c").write_text(
-        '#include "esp_log.h"\n\n'
+        '#include "esp_log.h"\n'
+        '#include "claw/claw.h"\n\n'
         "static const char *TAG = \"app\";\n\n"
         "void app_main(void)\n"
         "{\n"
-        '    ESP_LOGI(TAG, "hello from pico-idf");\n'
+        "    ESP_ERROR_CHECK(claw_runtime_init());\n"
+        "    ESP_ERROR_CHECK(claw_repl_start());\n"
+        '    ESP_LOGI(TAG, "hello from pico-idf claw");\n'
         "}\n",
         encoding="utf-8",
     )
@@ -390,7 +390,7 @@ def cmd_vibe_status(args: argparse.Namespace) -> int:
     for r in data["features"]:
         counts[r["status"]] = counts.get(r["status"], 0) + 1
     print(
-        "pico-idf features: "
+        "ESP-Claw features: "
         + ", ".join(f"{k}={v}" for k, v in sorted(counts.items()))
     )
     print(f"{'id':<16} {'status':<12} {'group':<14} title")
@@ -421,9 +421,9 @@ def cmd_mcp(_: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="pidf.py",
-        description="ESP-IDF-shaped CLI for Raspberry Pi Pico W / Pico 2 W",
+        description="ESP-Claw CLI for Raspberry Pi Pico W / Pico 2 W",
     )
-    p.add_argument("-C", "--project", help="project directory (default: cwd or blink example)")
+    p.add_argument("-C", "--project", help="project directory (default: cwd or claw edge_agent)")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     s = sub.add_parser("version", help="print version")

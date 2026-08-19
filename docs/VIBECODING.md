@@ -2,7 +2,7 @@
 
 Vibe-coding here means a **Model Context Protocol server**, not a
 chat-only workflow. Cursor (and any other MCP host) launches
-`tools/pidf_mcp.py` over stdio and calls tools to drive the ESP-IDF
+`tools/pidf_mcp.py` over stdio and calls tools to drive the **ESP-Claw**
 feature matrix onto Pico W / Pico 2 W.
 
 ## Start the server
@@ -35,25 +35,25 @@ PyPI dependency. Logs go to stderr; stdout is protocol only.
 
 | Tool | What an agent does with it |
 |---|---|
-| `list_features` / `get_feature` | Read the ESP-IDF → Pico matrix |
-| `vibe_next` | Get the next `planned` row and a ready prompt |
-| `scaffold_feature` | Create `components/<id>` + `examples/<group>/<id>` |
+| `list_features` / `get_feature` | Read the ESP-Claw → Pico matrix |
+| `vibe_next` | Get the next `planned` claw row and a ready prompt |
+| `scaffold_feature` | Remind that work lives in `components/claw` + examples |
 | `set_feature_status` | Mark the row `done` / `partial` after a green build |
 | `set_target` / `get_target` | `pico_w`, `pico2_w`, `pico2_w_riscv` |
-| `set_config` | `CONFIG_*` (SSID, blink GPIO, …) |
-| `build` | Cross-compile the current project |
-| `create_project` / `create_component` | New `app_main` app or component |
+| `set_config` | `CONFIG_*` |
+| `build` | Cross-compile the current project (default: edge_agent) |
+| `create_project` / `create_component` | New `app_main` claw app or helper component |
 | `get_rules` | AGENTS.md + compatibility constraints |
 | `list_examples` | Example list |
-| `list_claw_caps` | ESP-Claw-shaped builtin caps (done vs planned) |
+| `list_claw_caps` | Builtin caps (done vs planned) |
 
-`set_feature_status` refuses `impossible` → `done`. That is how ESP-NOW,
-ESP-MESH, SmartConfig, Thread, and touch stay honest.
+`set_feature_status` refuses `impossible` → `done`. The matrix is
+claw-only; do not invent ESP-IDF rows.
 
 ## Resources
 
-- `pidf://features` — full `tools/features.json`
-- `pidf://features/{id}` — one row
+- `pidf://features` — full `tools/features.json` (claw rows only)
+- `pidf://features/{id}` — one row (`claw-lua`, `claw-im`, …)
 - `pidf://target` — board + sdkconfig
 - `pidf://docs/architecture`
 - `pidf://docs/agents`
@@ -64,21 +64,19 @@ ESP-MESH, SmartConfig, Thread, and touch stay honest.
 
 ## Prompts
 
-- `implement_feature` — next (or named) planned slice
-- `port_esp_idf_app` — rewrite an ESP-IDF `app_main` for Pico
-- `explain_impossible` — why a row cannot exist on this silicon
+- `implement_feature` — next (or named) planned claw slice
 - `explain_claw` — Pico subset vs full ESP-Claw
+- `explain_impossible` — why a named row cannot be a full ESP-Claw module
 
 ## Agent loop
 
 1. `vibe_next` (or `implement_feature` prompt)
 2. `get_rules` if the host has not loaded them
-3. Implement the Pico backend (do not copy ESP-IDF `.c` files)
+3. Implement inside `components/claw` (do not copy ESP-Claw or ESP-IDF `.c` files)
 4. `build` for `pico_w`, then `set_target pico2_w` and `build` again
 5. `set_feature_status` to `done` or `partial`
 
-Keep `void app_main(void)` on FreeRTOS. Public names stay ESP-IDF-shaped
-when a matrix row exists.
+Keep `void app_main(void)` on FreeRTOS. Public names stay `claw_*`.
 
 ## Hardware reminders the MCP will also surface
 

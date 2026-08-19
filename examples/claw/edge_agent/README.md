@@ -1,6 +1,6 @@
-# ESP-Claw-shaped edge agent (pico-idf subset)
+# ESP-Claw-shaped edge agent
 
-Clean-room Pico port of the **ideas** behind
+Default pico-idf firmware. Clean-room Pico port of the **ideas** behind
 [ESP-Claw](https://github.com/espressif/esp-claw) (chat-as-creation,
 capabilities, events, memory, MCP). This is **not** ESP-Claw firmware
 and does not vendor Espressif sources.

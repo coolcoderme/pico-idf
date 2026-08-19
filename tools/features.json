@@ -3,532 +3,10 @@
   "targets": ["pico_w", "pico2_w", "pico2_w_riscv", "pico", "pico2"],
   "features": [
     {
-      "id": "mcp-server",
-      "group": "tooling",
-      "title": "pico-idf MCP server (vibe-coding)",
-      "esp_idf": "(none — Cursor / MCP hosts)",
-      "backend": "tools/pidf_mcp.py stdio JSON-RPC",
-      "status": "done",
-      "notes": "tools, resources, and prompts for feature matrix, target, build, scaffold"
-    },
-    {
-      "id": "cli",
-      "group": "tooling",
-      "title": "pidf.py CLI (idf.py analogue)",
-      "esp_idf": "idf.py",
-      "backend": "tools/pidf.py",
-      "status": "done",
-      "notes": "set-target, build, flash, monitor, menuconfig, create-*, vibe, mcp"
-    },
-    {
-      "id": "cmake-components",
-      "group": "tooling",
-      "title": "Component CMake + idf_component_register",
-      "esp_idf": "idf_component_register / project.cmake",
-      "backend": "tools/cmake/project.cmake",
-      "status": "done",
-      "notes": "Registers components/ plus project main/"
-    },
-    {
-      "id": "sdkconfig",
-      "group": "tooling",
-      "title": "sdkconfig CONFIG_* store",
-      "esp_idf": "Kconfig + sdkconfig",
-      "backend": "pidf.py menuconfig (key=value)",
-      "status": "partial",
-      "notes": "No full menuconfig TUI yet; sdkconfig.defaults works"
-    },
-    {
-      "id": "esp_err",
-      "group": "system",
-      "title": "Error codes",
-      "esp_idf": "esp_err.h",
-      "backend": "components/esp_common",
-      "status": "done",
-      "notes": "ESP_OK / ESP_FAIL / ESP_ERR_* + ESP_ERROR_CHECK"
-    },
-    {
-      "id": "esp_log",
-      "group": "system",
-      "title": "Logging",
-      "esp_idf": "esp_log.h",
-      "backend": "components/log",
-      "status": "done",
-      "notes": "ESP_LOGx over USB-CDC printf"
-    },
-    {
-      "id": "freertos-smp",
-      "group": "system",
-      "title": "FreeRTOS SMP + app_main",
-      "esp_idf": "FreeRTOS (IDF) + app_main",
-      "backend": "FreeRTOS-Kernel RP2040/RP2350 ports",
-      "status": "done",
-      "notes": "Dual-core SMP, Pico sync/time interop, app_main task"
-    },
-    {
-      "id": "esp_event",
-      "group": "system",
-      "title": "Event loop",
-      "esp_idf": "esp_event",
-      "backend": "components/esp_event",
-      "status": "partial",
-      "notes": "Default loop + handler register; WIFI_EVENT/IP_EVENT ids reserved"
-    },
-    {
-      "id": "esp_timer",
-      "group": "system",
-      "title": "High-resolution timers",
-      "esp_idf": "esp_timer",
-      "backend": "pico alarm pool / hardware_timer",
-      "status": "planned",
-      "notes": "Map esp_timer_create to alarm pool"
-    },
-    {
-      "id": "watchdog",
-      "group": "system",
-      "title": "Task + interrupt watchdogs",
-      "esp_idf": "esp_task_wdt / esp_int_wdt",
-      "backend": "hardware_watchdog",
-      "status": "planned",
-      "notes": "RP2040/RP2350 have a single watchdog; subset only"
-    },
-    {
-      "id": "esp_random",
-      "group": "system",
-      "title": "Random numbers",
-      "esp_idf": "esp_random / esp_fill_random",
-      "backend": "pico_rand / hardware_rosc",
-      "status": "planned",
-      "notes": ""
-    },
-    {
-      "id": "power",
-      "group": "system",
-      "title": "Sleep / power management",
-      "esp_idf": "esp_pm / esp_sleep",
-      "backend": "hardware_sleep / cyw43 power",
-      "status": "planned",
-      "notes": "Dormant + CYW43439 power-down; no ESP deep-sleep stub"
-    },
-    {
-      "id": "console",
-      "group": "system",
-      "title": "REPL console",
-      "esp_idf": "esp_console / linenoise",
-      "backend": "USB-CDC + linenoise-style",
-      "status": "planned",
-      "notes": ""
-    },
-    {
-      "id": "pthread",
-      "group": "system",
-      "title": "POSIX threads",
-      "esp_idf": "pthread",
-      "backend": "FreeRTOS + pthread wrappers",
-      "status": "planned",
-      "notes": "Optional; most apps should stay on FreeRTOS tasks"
-    },
-    {
-      "id": "heap-trace",
-      "group": "system",
-      "title": "Heap tracing",
-      "esp_idf": "heap_caps / heap tracing",
-      "backend": "FreeRTOS heap_4 + wrappers",
-      "status": "planned",
-      "notes": "No multi-capability heaps like ESP32 SPIRAM"
-    },
-    {
-      "id": "ota",
-      "group": "system",
-      "title": "OTA updates",
-      "esp_idf": "app_update / esp_https_ota",
-      "backend": "Dual UF2 slots + flash write",
-      "status": "planned",
-      "notes": "Custom layout, not ESP partition CSV"
-    },
-    {
-      "id": "gpio",
-      "group": "peripherals",
-      "title": "GPIO",
-      "esp_idf": "driver/gpio.h",
-      "backend": "hardware_gpio + CYW43439 LED pin 32",
-      "status": "done",
-      "notes": "PIDF_GPIO_WL_LED=32 is the Pico W onboard LED"
-    },
-    {
-      "id": "uart",
-      "group": "peripherals",
-      "title": "UART",
-      "esp_idf": "driver/uart.h",
-      "backend": "hardware_uart",
-      "status": "planned",
-      "notes": "2 UARTs on RP2040/RP2350"
-    },
-    {
-      "id": "i2c",
-      "group": "peripherals",
-      "title": "I2C",
-      "esp_idf": "driver/i2c_master.h",
-      "backend": "hardware_i2c",
-      "status": "planned",
-      "notes": ""
-    },
-    {
-      "id": "spi",
-      "group": "peripherals",
-      "title": "SPI master/slave",
-      "esp_idf": "driver/spi_master.h",
-      "backend": "hardware_spi",
-      "status": "planned",
-      "notes": ""
-    },
-    {
-      "id": "adc",
-      "group": "peripherals",
-      "title": "ADC oneshot",
-      "esp_idf": "esp_adc oneshot",
-      "backend": "hardware_adc",
-      "status": "planned",
-      "notes": "3–4 ADC GPIOs depending on chip; no calibration blob"
-    },
-    {
-      "id": "ledc",
-      "group": "peripherals",
-      "title": "PWM / LEDC",
-      "esp_idf": "driver/ledc.h",
-      "backend": "hardware_pwm",
-      "status": "planned",
-      "notes": "PWM slices, not LEDC timers/channels"
-    },
-    {
-      "id": "i2s",
-      "group": "peripherals",
-      "title": "I2S",
-      "esp_idf": "driver/i2s.h",
-      "backend": "PIO I2S",
-      "status": "planned",
-      "notes": "No dedicated I2S block; use pico-extras / PIO"
-    },
-    {
-      "id": "rmt",
-      "group": "peripherals",
-      "title": "RMT (WS2812, IR)",
-      "esp_idf": "driver/rmt_tx.h",
-      "backend": "PIO programs",
-      "status": "planned",
-      "notes": "Emulation, not cycle-identical to ESP RMT"
-    },
-    {
-      "id": "pcnt",
-      "group": "peripherals",
-      "title": "Pulse counter",
-      "esp_idf": "driver/pulse_cnt.h",
-      "backend": "PIO",
-      "status": "planned",
-      "notes": ""
-    },
-    {
-      "id": "mcpwm",
-      "group": "peripherals",
-      "title": "Motor PWM",
-      "esp_idf": "driver/mcpwm.h",
-      "backend": "hardware_pwm + PIO",
-      "status": "planned",
-      "notes": "Subset"
-    },
-    {
-      "id": "sdspi",
-      "group": "peripherals",
-      "title": "SD SPI host",
-      "esp_idf": "sdspi_host",
-      "backend": "hardware_spi + FatFs",
-      "status": "planned",
-      "notes": ""
-    },
-    {
-      "id": "usb",
-      "group": "peripherals",
-      "title": "USB device/host",
-      "esp_idf": "TinyUSB (esp_tinyusb)",
-      "backend": "pico TinyUSB",
-      "status": "partial",
-      "notes": "stdio USB-CDC is on; full device/host classes planned"
-    },
-    {
-      "id": "pio",
-      "group": "peripherals",
-      "title": "PIO (Pico extension)",
-      "esp_idf": "(none)",
-      "backend": "hardware_pio",
-      "status": "planned",
-      "notes": "Pico-only superpower; prefer this when ESP silicon is missing"
-    },
-    {
-      "id": "touch",
-      "group": "peripherals",
-      "title": "Capacitive touch",
-      "esp_idf": "driver/touch_pad.h",
-      "backend": "none",
-      "status": "impossible",
-      "notes": "No touch hardware. Use GPIO buttons or an external controller."
-    },
-    {
-      "id": "dac",
-      "group": "peripherals",
-      "title": "True DAC",
-      "esp_idf": "driver/dac_oneshot.h",
-      "backend": "PWM / external DAC",
-      "status": "impossible",
-      "notes": "No analog DAC. PWM + RC or I2C DAC instead."
-    },
-    {
-      "id": "twai",
-      "group": "peripherals",
-      "title": "TWAI / CAN",
-      "esp_idf": "driver/twai.h",
-      "backend": "none (or external CAN SPI)",
-      "status": "impossible",
-      "notes": "No CAN controller. Use MCP2515 (SPI) as a planned extra."
-    },
-    {
-      "id": "ethernet",
-      "group": "network",
-      "title": "Ethernet MAC",
-      "esp_idf": "esp_eth",
-      "backend": "W5500 SPI (optional)",
-      "status": "impossible",
-      "notes": "No on-chip MAC. Optional W5500 component is planned later."
-    },
-    {
-      "id": "wifi",
-      "group": "network",
-      "title": "Wi-Fi STA/AP",
-      "esp_idf": "esp_wifi",
-      "backend": "cyw43 + lwIP + FreeRTOS arch",
-      "status": "planned",
-      "notes": "Map init/mode/config/start/connect; 802.11n 2.4 GHz only"
-    },
-    {
-      "id": "esp_netif",
-      "group": "network",
-      "title": "esp_netif",
-      "esp_idf": "esp_netif",
-      "backend": "lwIP netif wrapper",
-      "status": "planned",
-      "notes": ""
-    },
-    {
-      "id": "esp-now",
-      "group": "network",
-      "title": "ESP-NOW",
-      "esp_idf": "esp_now",
-      "backend": "none",
-      "status": "impossible",
-      "notes": "Espressif proprietary MAC. Use UDP, BLE, or raw 802.11 is not available."
-    },
-    {
-      "id": "esp-mesh",
-      "group": "network",
-      "title": "ESP-WIFI-MESH",
-      "esp_idf": "esp_mesh",
-      "backend": "none",
-      "status": "impossible",
-      "notes": "Espressif proprietary. Use MQTT or a userspace mesh."
-    },
-    {
-      "id": "smartconfig",
-      "group": "network",
-      "title": "SmartConfig / ESP-Touch",
-      "esp_idf": "esp_smartconfig",
-      "backend": "none",
-      "status": "impossible",
-      "notes": "Replace with softAP + HTTP provisioning (planned)."
-    },
-    {
-      "id": "thread-zigbee",
-      "group": "network",
-      "title": "Thread / Zigbee / 802.15.4",
-      "esp_idf": "esp_openthread / Zigbee",
-      "backend": "none",
-      "status": "impossible",
-      "notes": "CYW43439 is Wi-Fi/BT only."
-    },
-    {
-      "id": "wifi-monitor",
-      "group": "network",
-      "title": "Wi-Fi sniffer / monitor",
-      "esp_idf": "esp_wifi_set_promiscuous",
-      "backend": "CYW43439 (limited)",
-      "status": "impossible",
-      "notes": "CYW43439 does not expose ESP-style promiscuous mode."
-    },
-    {
-      "id": "http-client",
-      "group": "protocols",
-      "title": "HTTP client",
-      "esp_idf": "esp_http_client",
-      "backend": "lwIP + mbedTLS",
-      "status": "planned",
-      "notes": ""
-    },
-    {
-      "id": "http-server",
-      "group": "protocols",
-      "title": "HTTP server",
-      "esp_idf": "esp_http_server",
-      "backend": "lwIP httpd or custom",
-      "status": "planned",
-      "notes": ""
-    },
-    {
-      "id": "mqtt",
-      "group": "protocols",
-      "title": "MQTT client",
-      "esp_idf": "esp-mqtt",
-      "backend": "lwIP + coreMQTT or esp-mqtt port",
-      "status": "planned",
-      "notes": "Clean-room or Apache-2.0 coreMQTT; do not copy esp-mqtt blindly"
-    },
-    {
-      "id": "mdns",
-      "group": "protocols",
-      "title": "mDNS",
-      "esp_idf": "mdns",
-      "backend": "lwIP mdns",
-      "status": "planned",
-      "notes": ""
-    },
-    {
-      "id": "sntp",
-      "group": "protocols",
-      "title": "SNTP",
-      "esp_idf": "esp_sntp",
-      "backend": "lwIP sntp",
-      "status": "planned",
-      "notes": ""
-    },
-    {
-      "id": "esp-tls",
-      "group": "protocols",
-      "title": "ESP-TLS",
-      "esp_idf": "esp_tls",
-      "backend": "mbedTLS (Pico SDK)",
-      "status": "planned",
-      "notes": ""
-    },
-    {
-      "id": "modbus",
-      "group": "protocols",
-      "title": "Modbus",
-      "esp_idf": "esp-modbus",
-      "backend": "UART / TCP",
-      "status": "planned",
-      "notes": ""
-    },
-    {
-      "id": "ble",
-      "group": "bluetooth",
-      "title": "Bluetooth LE",
-      "esp_idf": "esp_gap_ble / gatts / gatc",
-      "backend": "BTstack + CYW43439",
-      "status": "planned",
-      "notes": "Bluedroid-shaped wrapper over BTstack"
-    },
-    {
-      "id": "bt-classic",
-      "group": "bluetooth",
-      "title": "Bluetooth Classic",
-      "esp_idf": "esp_bt",
-      "backend": "BTstack",
-      "status": "planned",
-      "notes": "SPP/A2DP subset only"
-    },
-    {
-      "id": "ble-mesh",
-      "group": "bluetooth",
-      "title": "ESP-BLE-MESH",
-      "esp_idf": "esp_ble_mesh",
-      "backend": "BTstack mesh (maybe)",
-      "status": "impossible",
-      "notes": "Different mesh stack; do not claim ESP-BLE-MESH compatibility."
-    },
-    {
-      "id": "nvs",
-      "group": "storage",
-      "title": "NVS key-value",
-      "esp_idf": "nvs_flash",
-      "backend": "on-board flash tail",
-      "status": "planned",
-      "notes": "First vibe-coding slice after this foundation"
-    },
-    {
-      "id": "vfs",
-      "group": "storage",
-      "title": "VFS",
-      "esp_idf": "esp_vfs",
-      "backend": "newlib + mount table",
-      "status": "planned",
-      "notes": ""
-    },
-    {
-      "id": "littlefs",
-      "group": "storage",
-      "title": "LittleFS / SPIFFS analogue",
-      "esp_idf": "spiffs",
-      "backend": "LittleFS on flash",
-      "status": "planned",
-      "notes": "LittleFS is the Pico-native choice"
-    },
-    {
-      "id": "fatfs",
-      "group": "storage",
-      "title": "FAT on SD",
-      "esp_idf": "fatfs",
-      "backend": "FatFs + sdspi",
-      "status": "planned",
-      "notes": ""
-    },
-    {
-      "id": "provisioning",
-      "group": "provisioning",
-      "title": "Wi-Fi provisioning",
-      "esp_idf": "wifi_provisioning / protocomm",
-      "backend": "softAP + HTTP (or BLE)",
-      "status": "planned",
-      "notes": "Not ESP-Touch; documented substitute"
-    },
-    {
-      "id": "efuse",
-      "group": "security",
-      "title": "eFuse manager",
-      "esp_idf": "esp_efuse",
-      "backend": "RP2350 OTP only",
-      "status": "impossible",
-      "notes": "RP2040 has no OTP/eFuse. RP2350 OTP is a later Pico extension."
-    },
-    {
-      "id": "ulp",
-      "group": "system",
-      "title": "ULP coprocessor",
-      "esp_idf": "ulp",
-      "backend": "PIO + core 1",
-      "status": "impossible",
-      "notes": "Use PIO or a FreeRTOS task pinned to core 1."
-    },
-    {
-      "id": "himem-psram",
-      "group": "system",
-      "title": "Himem / SPIRAM",
-      "esp_idf": "esp_himem / spiram",
-      "backend": "optional RP2350 PSRAM",
-      "status": "impossible",
-      "notes": "Pico W has no extra PSRAM. Pico 2 W boards may; treat as Pico extension."
-    },
-    {
       "id": "claw-runtime",
       "group": "claw",
       "title": "ESP-Claw-shaped runtime (caps, events, memory, local agent)",
-      "esp_idf": "ESP-Claw claw_cap / claw_event_router / claw_memory / claw_core (inspired, not copied)",
+      "esp_claw": "claw_cap / claw_event_router / claw_memory / claw_core (inspired, not copied)",
       "backend": "components/claw + examples/claw/edge_agent",
       "status": "done",
       "notes": "Pico subset: JSON-ish cap calls, RAM notes, keyword agent, USB claw> REPL. Not full ESP-Claw."
@@ -537,7 +15,7 @@
       "id": "claw-sched",
       "group": "claw",
       "title": "Claw scheduler",
-      "esp_idf": "ESP-Claw cap_scheduler (inspired)",
+      "esp_claw": "cap_scheduler (inspired)",
       "backend": "FreeRTOS software timers posting claw events",
       "status": "done",
       "notes": "Periodic jobs only; no cron expressions"
@@ -546,7 +24,7 @@
       "id": "claw-mcp-device",
       "group": "claw",
       "title": "On-device MCP (capabilities as tools)",
-      "esp_idf": "ESP-Claw cap_mcp_server (inspired)",
+      "esp_claw": "cap_mcp_server (inspired)",
       "backend": "USB-CDC JSON-RPC lines via claw_mcp_handle_line",
       "status": "partial",
       "notes": "initialize / tools/list / tools/call / ping. Not a full MCP SDK."
@@ -555,7 +33,7 @@
       "id": "claw-lua",
       "group": "claw",
       "title": "On-device Lua",
-      "esp_idf": "ESP-Claw cap_lua",
+      "esp_claw": "cap_lua",
       "backend": "none yet (RAM)",
       "status": "planned",
       "notes": "Pico W cannot host ESP-Claw's Lua + driver set. Event rules substitute for now."
@@ -564,26 +42,26 @@
       "id": "claw-im",
       "group": "claw",
       "title": "Instant messaging channels",
-      "esp_idf": "ESP-Claw cap_im_platform",
-      "backend": "lwIP + TLS after wifi",
+      "esp_claw": "cap_im_platform",
+      "backend": "CYW43439 + lwIP + TLS (not an ESP-IDF wifi component)",
       "status": "planned",
-      "notes": "Telegram/Feishu/etc. need Wi-Fi. USB REPL is the local stand-in."
+      "notes": "Telegram/Feishu/etc. need the Pico SDK wireless stack. USB REPL is the local stand-in."
     },
     {
       "id": "claw-llm",
       "group": "claw",
       "title": "Cloud / HTTP LLM agent path",
-      "esp_idf": "ESP-Claw cap_llm_config / agent loop",
-      "backend": "http-client + user endpoint in sdkconfig",
+      "esp_claw": "cap_llm_config / agent loop",
+      "backend": "lwIP + mbedTLS HTTP to a user endpoint in sdkconfig",
       "status": "planned",
-      "notes": "Blocked on wifi + http-client. Local keyword agent works offline."
+      "notes": "Blocked on a Pico Wi-Fi + TLS client, not on an ESP-IDF feature row. Local keyword agent works offline."
     },
     {
       "id": "claw-skill",
       "group": "claw",
       "title": "Skills / board manager / HTTP settings UI",
-      "esp_idf": "ESP-Claw claw_skill / cap_boards / HTTP UI",
-      "backend": "http-server + littlefs (later)",
+      "esp_claw": "claw_skill / cap_boards / HTTP UI",
+      "backend": "LittleFS + a small HTTP server later",
       "status": "planned",
       "notes": "ESP-Claw wants FATFS SYSTEM/DATA partitions; Pico will use LittleFS."
     }

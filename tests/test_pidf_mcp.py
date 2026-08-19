@@ -103,19 +103,26 @@ class PidfMcpTests(unittest.TestCase):
         out = self._tool("vibe_next")
         self.assertFalse(out["isError"], out["text"])
         payload = json.loads(out["text"])
-        self.assertEqual(payload["feature"]["id"], "nvs")
-        self.assertIn("do not copy ESP-IDF", payload["prompt"])
+        self.assertEqual(payload["feature"]["id"], "claw-lua")
+        self.assertEqual(payload["feature"]["group"], "claw")
+        self.assertIn("do not copy ESP-Claw", payload["prompt"])
+        self.assertNotIn("nvs", out["text"])
 
-    def test_list_features_planned(self) -> None:
-        out = self._tool("list_features", status="planned")
+    def test_list_features_is_claw_only(self) -> None:
+        out = self._tool("list_features")
         payload = json.loads(out["text"])
-        self.assertGreater(payload["counts"]["planned"], 0)
-        self.assertTrue(all(r["status"] == "planned" for r in payload["features"]))
+        self.assertTrue(payload["features"])
+        self.assertTrue(all(r["group"] == "claw" for r in payload["features"]))
+        ids = {r["id"] for r in payload["features"]}
+        self.assertIn("claw-runtime", ids)
+        self.assertNotIn("nvs", ids)
+        self.assertNotIn("wifi", ids)
+        self.assertNotIn("esp-now", ids)
 
-    def test_refuses_impossible_done(self) -> None:
+    def test_refuses_unknown_esp_idf_id(self) -> None:
         out = self._tool("set_feature_status", id="esp-now", status="done")
         self.assertTrue(out["isError"], out["text"])
-        self.assertIn("impossible", out["text"].lower())
+        self.assertIn("esp-now", out["text"].lower())
 
     def test_resources_and_prompts(self) -> None:
         resources = self.client.call("resources/list")["result"]["resources"]
@@ -130,12 +137,14 @@ class PidfMcpTests(unittest.TestCase):
         names = {p["name"] for p in prompts}
         self.assertIn("implement_feature", names)
         self.assertIn("explain_claw", names)
+        self.assertNotIn("port_esp_idf_app", names)
         got = self.client.call(
             "prompts/get",
-            {"name": "implement_feature", "arguments": {"id": "wifi"}},
+            {"name": "implement_feature", "arguments": {"id": "claw-lua"}},
         )
         text = got["result"]["messages"][0]["content"]["text"]
-        self.assertIn("wifi", text)
+        self.assertIn("claw-lua", text)
+        self.assertNotIn("wifi", text)
 
     def test_claw_surface(self) -> None:
         out = self._tool("list_features", group="claw")

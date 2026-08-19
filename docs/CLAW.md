@@ -11,20 +11,22 @@ PSRAM**. Pico W is 264 KB SRAM and typically 2 MB flash; Pico 2 W is
 about 520 KB SRAM and 4 MB flash. A full Lua VM + Telegram/Feishu +
 FATFS + cloud LLM client will not fit. The matrix stays honest.
 
+The feature matrix is **ESP-Claw only**. ESP-IDF APIs are not tracked.
+
 ## What ships now
 
 | ESP-Claw idea | pico-idf | Status |
 |---|---|---|
 | Capability registry / invoke | `claw_cap_register` / `claw_cap_call` | done |
 | Event bus + router rules | `claw_event_post` / `claw_event_add_rule` | done |
-| Structured memory | RAM ring of notes (`claw_memory_*`); NVS later | partial |
+| Structured memory | RAM ring of notes (`claw_memory_*`) | partial |
 | Agent loop | Local keyword NLU → caps (`claw_core_submit`) | partial |
 | Scheduler | FreeRTOS software timers posting events | done |
 | MCP server | USB-CDC JSON-RPC lines (`claw_mcp_handle_line`) | partial |
 | USB console | `claw>` REPL (`claw_repl_eval` / `claw_repl_start`) | done |
 | Lua + drivers | `claw_lua_eval` returns `ESP_ERR_NOT_SUPPORTED` | planned |
-| IM (Telegram, Feishu, …) | `claw_im_send` — needs Wi-Fi + TLS | planned |
-| Cloud / local LLM HTTP | after `wifi` + `http-client` | planned |
+| IM (Telegram, Feishu, …) | `claw_im_send` — needs Pico SDK Wi-Fi + TLS | planned |
+| Cloud / local LLM HTTP | after a TLS HTTP client | planned |
 | Skills / board manager / web UI | not started | planned |
 | Camera / touch Lua drivers | no silicon / no camera bridge in-tree | planned / impossible |
 
@@ -36,8 +38,8 @@ a CPU pin.
 
 ## Example
 
-`examples/claw/edge_agent` is opt-in. Blink does **not** link `claw`.
-`main` must `REQUIRES claw`.
+`examples/claw/edge_agent` is the default project. `main` must
+`REQUIRES claw`.
 
 ```bash
 export PIDF_PROJECT=$PIDF_PATH/examples/claw/edge_agent
@@ -77,7 +79,7 @@ docs, implementations are original and Pico-sized.
 
 ## Host MCP
 
-Cursor's pico-idf server can `list_features` with `group=claw`, read
-`pidf://docs/claw`, and use the `explain_claw` prompt. That is how
+Cursor's pico-idf server lists only claw features. Call `vibe_next`,
+read `pidf://docs/claw`, and use the `explain_claw` prompt. That is how
 vibe-coding continues Lua/IM/LLM slices without pretending they work
-today.
+today and without reintroducing ESP-IDF rows.

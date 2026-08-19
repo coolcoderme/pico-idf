@@ -46,21 +46,30 @@ class FeaturesJsonTests(unittest.TestCase):
         for row in self.data["features"]:
             self.assertIn(row["status"], allowed, row["id"])
             self.assertTrue(row["title"])
-            self.assertTrue(row["esp_idf"])
+            self.assertTrue(row["esp_claw"])
             self.assertTrue(row["backend"])
+            self.assertEqual(row["group"], "claw", row["id"])
+            self.assertTrue(row["id"].startswith("claw-"), row["id"])
+
+    def test_no_esp_idf_rows(self) -> None:
+        ids = {row["id"] for row in self.data["features"]}
+        for banned in (
+            "nvs",
+            "wifi",
+            "esp_netif",
+            "mqtt",
+            "gpio",
+            "esp_err",
+            "esp-now",
+            "freertos-smp",
+            "cli",
+            "mcp-server",
+        ):
+            self.assertNotIn(banned, ids)
 
     def test_foundation_is_done(self) -> None:
         by_id = {row["id"]: row for row in self.data["features"]}
-        for key in (
-            "cli",
-            "mcp-server",
-            "esp_err",
-            "esp_log",
-            "freertos-smp",
-            "gpio",
-            "claw-runtime",
-            "claw-sched",
-        ):
+        for key in ("claw-runtime", "claw-sched"):
             self.assertEqual(by_id[key]["status"], "done", key)
 
     def test_claw_rows_are_honest(self) -> None:
@@ -70,10 +79,10 @@ class FeaturesJsonTests(unittest.TestCase):
         self.assertEqual(by_id["claw-im"]["status"], "planned")
         self.assertEqual(by_id["claw-llm"]["status"], "planned")
 
-    def test_impossible_rows_stay_impossible(self) -> None:
+    def test_impossible_rows_are_absent(self) -> None:
         by_id = {row["id"]: row for row in self.data["features"]}
         for key in ("esp-now", "esp-mesh", "smartconfig", "thread-zigbee", "touch"):
-            self.assertEqual(by_id[key]["status"], "impossible", key)
+            self.assertNotIn(key, by_id)
 
 
 class PidfCliTests(unittest.TestCase):
@@ -85,20 +94,24 @@ class PidfCliTests(unittest.TestCase):
     def test_vibe_status(self) -> None:
         proc = run_pidf("vibe", "status")
         self.assertEqual(proc.returncode, 0, proc.stderr)
-        self.assertIn("freertos-smp", proc.stdout)
+        self.assertIn("claw-runtime", proc.stdout)
+        self.assertIn("ESP-Claw features", proc.stdout)
+        self.assertNotIn("freertos-smp", proc.stdout)
+        self.assertNotIn("nvs", proc.stdout)
         self.assertIn("done=", proc.stdout)
 
     def test_vibe_next_default_is_planned(self) -> None:
         proc = run_pidf("vibe", "next")
         self.assertEqual(proc.returncode, 0, proc.stderr)
-        self.assertIn("Implement pico-idf feature", proc.stdout)
-        self.assertIn("do not copy esp-idf", proc.stdout.lower())
+        self.assertIn("Implement pico-idf ESP-Claw feature", proc.stdout)
+        self.assertIn("claw-lua", proc.stdout)
+        self.assertIn("do not copy esp-claw", proc.stdout.lower())
+        self.assertNotIn("nvs", proc.stdout)
 
-    def test_vibe_next_impossible_id(self) -> None:
+    def test_vibe_next_unknown_esp_idf_id(self) -> None:
         proc = run_pidf("vibe", "next", "esp-now")
-        self.assertEqual(proc.returncode, 0, proc.stderr)
-        self.assertIn("esp-now", proc.stdout)
-        self.assertIn("impossible", proc.stdout)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("esp-now", proc.stderr)
 
     def test_set_target_and_menuconfig(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -139,6 +152,9 @@ class PidfCliTests(unittest.TestCase):
             self.assertTrue((dest / "main" / "main.c").exists())
             src = (dest / "main" / "main.c").read_text(encoding="utf-8")
             self.assertIn("app_main", src)
+            self.assertIn("claw_runtime_init", src)
+            cmake = (dest / "main" / "CMakeLists.txt").read_text(encoding="utf-8")
+            self.assertIn("REQUIRES claw", cmake)
 
 
 class HostCTests(unittest.TestCase):

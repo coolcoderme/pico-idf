@@ -1,5 +1,8 @@
 # Feature matrix
 
+This tree tracks **ESP-Claw features only**. There is no ESP-IDF
+feature backlog (no `nvs`, `wifi`, `mqtt`, GPIO-as-IDF, …).
+
 Machine-readable source of truth: [`tools/features.json`](../tools/features.json).
 
 Print the live table:
@@ -15,38 +18,27 @@ Status values:
 
 | Status | Meaning |
 |---|---|
-| `done` | Public API works; an example builds |
+| `done` | Public `claw_*` API works; `examples/claw/edge_agent` builds |
 | `partial` | Common subset works |
-| `planned` | Pico backend exists or is straightforward; not wrapped yet |
-| `impossible` | No silicon, no radio, or Espressif-proprietary. Use the note's substitute |
+| `planned` | Pico-sized analogue is straightforward; not wrapped yet |
+| `impossible` | No silicon or RAM for a full ESP-Claw module. Use the note's substitute |
 
-## How "all ESP-IDF features" get onto a Pico W / Pico 2 W
-
-1. **RTOS first.** FreeRTOS SMP is already the kernel. Networking on W
-   boards will use the FreeRTOS CYW43 arch, not a poll loop.
-2. **Wrap what the Pico SDK already ships** (lwIP, BTstack, mbedTLS,
-   TinyUSB, GPIO/UART/I2C/SPI/ADC/PWM) with ESP-IDF-shaped headers.
-3. **Emulate ESP-only peripherals with PIO** (RMT, PCNT, I2S).
-4. **Refuse the impossible honestly** (ESP-NOW, ESP-MESH, Thread,
-   touch, TWAI, eFuse on RP2040) and document the substitute.
-5. **Vibe-code one `planned` row per change** so the matrix stays true.
-
-Suggested implementation order after this foundation:
-
-1. `nvs` — flash key-value (unlocks Wi-Fi credentials)
-2. `wifi` + `esp_netif` + `esp_event` WIFI/IP posts
-3. `http-client` / `http-server` / `sntp` / `mdns`
-4. `mqtt` + `esp-tls`
-5. `ble` (BTstack wrapper)
-6. `uart` `i2c` `spi` `adc` `ledc`
-7. `ota` + `littlefs` + `vfs`
-8. `provisioning` (softAP, not SmartConfig)
-9. PIO extras: `rmt`, `i2s`, `pcnt`
-
-ESP-Claw-shaped work (opt-in, not linked into blink):
+## ESP-Claw rows
 
 - **done:** `claw-runtime`, `claw-sched` — caps, events, RAM memory, local agent, USB REPL
 - **partial:** `claw-mcp-device` — JSON-RPC lines over USB-CDC
-- **planned:** `claw-lua`, `claw-im`, `claw-llm`, `claw-skill` (blocked on RAM / Wi-Fi)
+- **planned:** `claw-lua`, `claw-im`, `claw-llm`, `claw-skill`
+
+Suggested vibe-coding order:
+
+1. `claw-lua` — honest Pico-sized Lua or keep event-rule substitute
+2. `claw-mcp-device` — finish the USB JSON-RPC tool surface
+3. `claw-im` — IM over Pico SDK Wi-Fi + TLS
+4. `claw-llm` — HTTP LLM after a TLS client exists
+5. `claw-skill` — skills / board manager / settings UI on LittleFS
+
+Pico SDK, FreeRTOS SMP, and thin `esp_err` / `ESP_LOGI` / GPIO helpers
+are **runtime infrastructure** for `components/claw`. They are not
+features to port from ESP-IDF.
 
 See [docs/CLAW.md](CLAW.md).
