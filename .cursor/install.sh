@@ -3,8 +3,8 @@
 # Idempotent Cloud Agent bootstrap for pico-idf.
 #
 # Installs the ARM cross toolchain, Raspberry Pi Pico SDK, FreeRTOS-Kernel
-# (RP2040 / RP2350 SMP ports), and picotool. Configures the blink example
-# so `pidf.py build` works immediately.
+# (RP2040 / RP2350 SMP ports), and picotool. Configures the claw edge_agent
+# example so `pidf.py build` works immediately.
 #
 set -euo pipefail
 
@@ -74,12 +74,12 @@ fi
 export PIDF_PATH="${REPO_DIR}"
 chmod +x "${REPO_DIR}/tools/pidf.py"
 
-echo "==> Configuring blink example for pico_w"
-"${REPO_DIR}/tools/pidf.py" -C "${REPO_DIR}/examples/get-started/blink" set-target pico_w
-"${REPO_DIR}/tools/pidf.py" -C "${REPO_DIR}/examples/get-started/blink" build || true
+echo "==> Configuring claw edge_agent example for pico_w"
+"${REPO_DIR}/tools/pidf.py" -C "${REPO_DIR}/examples/claw/edge_agent" set-target pico_w
+"${REPO_DIR}/tools/pidf.py" -C "${REPO_DIR}/examples/claw/edge_agent" build || true
 
 echo "==> Done."
 echo "    export PIDF_PATH=${REPO_DIR}"
 echo "    export PICO_SDK_PATH=${PICO_SDK_PATH}"
 echo "    export FREERTOS_KERNEL_PATH=${FREERTOS_KERNEL_PATH}"
-echo "    ${REPO_DIR}/tools/pidf.py -C ${REPO_DIR}/examples/get-started/blink build"
+echo "    ${REPO_DIR}/tools/pidf.py -C ${REPO_DIR}/examples/claw/edge_agent build"
