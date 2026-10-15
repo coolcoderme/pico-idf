@@ -1,5 +1,7 @@
 # pico-idf architecture
 
+How the overlapping drafts were merged: [CONSOLIDATION.md](CONSOLIDATION.md).
+
 **pico-idf** is an **ESP-Claw-shaped** edge-agent framework for the
 Raspberry Pi Pico W (RP2040 + CYW43439) and Pico 2 W (RP2350 + CYW43439).
 It is not ESP-IDF, and it is not Espressif's [ESP-Claw](https://github.com/espressif/esp-claw)

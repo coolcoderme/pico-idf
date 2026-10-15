@@ -97,9 +97,9 @@ macro(project name)
     add_subdirectory("${PIDF_PATH}/components/esp_event" "${CMAKE_BINARY_DIR}/pidf/esp_event")
     add_subdirectory("${PIDF_PATH}/components/driver" "${CMAKE_BINARY_DIR}/pidf/driver")
 
-    # Optional stacks (claw, later wifi, …) register here but stay out of
-    # the default link line. EXCLUDE_FROM_ALL keeps blink from compiling
-    # them until main REQUIRES the target.
+    # Optional stacks (claw, later helpers) register here but stay out
+    # of the default link line. EXCLUDE_FROM_ALL keeps blink from
+    # compiling them until main REQUIRES the target.
     set(_pidf_core_comps esp_common log freertos esp_event driver)
     file(GLOB _pidf_comp_entries LIST_DIRECTORIES true "${PIDF_PATH}/components/*")
     foreach(_dir IN LISTS _pidf_comp_entries)
@@ -135,9 +135,9 @@ macro(project name)
         pico_stdlib
     )
 
-    # W-board LED lives on the CYW43439. Use the no-lwIP arch so blink
-    # does not need a full TCP stack. The planned `wifi` feature will
-    # switch apps to pico_cyw43_arch_lwip_sys_freertos.
+    # W-board LED lives on the CYW43439. Use the no-lwIP arch so claw
+    # and blink do not need a full TCP stack. Later claw-im / claw-llm
+    # rows can switch apps to pico_cyw43_arch_lwip_sys_freertos.
     if(PICO_CYW43_SUPPORTED)
         target_link_libraries(${name} PRIVATE pico_cyw43_arch_none)
         target_compile_definitions(${name} PRIVATE PIDF_CYW43=1)

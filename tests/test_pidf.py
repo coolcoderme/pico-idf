@@ -78,6 +78,7 @@ class FeaturesJsonTests(unittest.TestCase):
         self.assertEqual(by_id["claw-lua"]["status"], "planned")
         self.assertEqual(by_id["claw-im"]["status"], "planned")
         self.assertEqual(by_id["claw-llm"]["status"], "planned")
+        self.assertEqual(by_id["claw-skill"]["status"], "planned")
 
     def test_impossible_rows_are_absent(self) -> None:
         by_id = {row["id"]: row for row in self.data["features"]}

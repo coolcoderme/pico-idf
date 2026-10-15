@@ -2,9 +2,14 @@
 #
 # Idempotent Cloud Agent bootstrap for pico-idf.
 #
-# Installs the ARM cross toolchain, Raspberry Pi Pico SDK, FreeRTOS-Kernel
-# (RP2040 / RP2350 SMP ports), and picotool. Configures the claw edge_agent
-# example so `pidf.py build` works immediately.
+# Combines the Pico SDK / toolchain / picotool bootstrap from the original
+# environment draft with FreeRTOS-Kernel and the claw edge_agent default.
+#
+#   * ARM cross toolchain for RP2040 / RP2350
+#   * GNU host cc/c++ (base-image clang cannot find libstdc++)
+#   * pinned Pico SDK 2.3.0 and system picotool
+#   * Raspberry Pi FreeRTOS-Kernel fork (RP2040 / RP2350 SMP ports)
+#   * configure examples/claw/edge_agent so `pidf.py build` works immediately
 #
 set -euo pipefail
 

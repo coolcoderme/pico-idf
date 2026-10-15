@@ -94,3 +94,19 @@ Ships today:
 
 Still `planned` on the claw matrix: Lua, IM, cloud LLM, skills UI.
 ESP-IDF APIs are out of scope.
+
+## Cloud Agent environment
+
+[`.cursor/environment.json`](.cursor/environment.json) points `install`
+at [`.cursor/install.sh`](.cursor/install.sh). The script is
+idempotent: ARM cross toolchain, GNU host `cc`/`c++` (the base image's
+clang cannot find libstdc++), Pico SDK 2.3.0 at `/opt/pico-sdk`,
+FreeRTOS-Kernel at `/opt/FreeRTOS-Kernel`, system `picotool`, and a
+first configure of `examples/claw/edge_agent` for `pico_w`.
+
+Merging this PR makes future Cloud Agents on `main` set up from that
+script. Bring-up without the claw stack is still
+`examples/get-started/blink`.
+
+How the three overlapping drafts were merged:
+[docs/CONSOLIDATION.md](docs/CONSOLIDATION.md).
