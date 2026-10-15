@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "targets": ["pico_w", "pico2_w", "pico2_w_riscv", "pico", "pico2"],
+  "features": [
+    {
+      "id": "claw-runtime",
+      "group": "claw",
+      "title": "ESP-Claw-shaped runtime (caps, events, memory, local agent)",
+      "esp_claw": "claw_cap / claw_event_router / claw_memory / claw_core (inspired, not copied)",
+      "backend": "components/claw + examples/claw/edge_agent",
+      "status": "done",
+      "notes": "Pico subset: JSON-ish cap calls, RAM notes, keyword agent, USB claw> REPL. Not full ESP-Claw."
+    },
+    {
+      "id": "claw-sched",
+      "group": "claw",
+      "title": "Claw scheduler",
+      "esp_claw": "cap_scheduler (inspired)",
+      "backend": "FreeRTOS software timers posting claw events",
+      "status": "done",
+      "notes": "Periodic jobs only; no cron expressions"
+    },
+    {
+      "id": "claw-mcp-device",
+      "group": "claw",
+      "title": "On-device MCP (capabilities as tools)",
+      "esp_claw": "cap_mcp_server (inspired)",
+      "backend": "USB-CDC JSON-RPC lines via claw_mcp_handle_line",
+      "status": "partial",
+      "notes": "initialize / tools/list / tools/call / ping. Not a full MCP SDK."
+    },
+    {
+      "id": "claw-lua",
+      "group": "claw",
+      "title": "On-device Lua",
+      "esp_claw": "cap_lua",
+      "backend": "none yet (RAM)",
+      "status": "planned",
+      "notes": "Pico W cannot host ESP-Claw's Lua + driver set. Event rules substitute for now."
+    },
+    {
+      "id": "claw-im",
+      "group": "claw",
+      "title": "Instant messaging channels",
+      "esp_claw": "cap_im_platform",
+      "backend": "CYW43439 + lwIP + TLS (not an ESP-IDF wifi component)",
+      "status": "planned",
+      "notes": "Telegram/Feishu/etc. need the Pico SDK wireless stack. USB REPL is the local stand-in."
+    },
+    {
+      "id": "claw-llm",
+      "group": "claw",
+      "title": "Cloud / HTTP LLM agent path",
+      "esp_claw": "cap_llm_config / agent loop",
+      "backend": "lwIP + mbedTLS HTTP to a user endpoint in sdkconfig",
+      "status": "planned",
+      "notes": "Blocked on a Pico Wi-Fi + TLS client, not on an ESP-IDF feature row. Local keyword agent works offline."
+    },
+    {
+      "id": "claw-skill",
+      "group": "claw",
+      "title": "Skills / board manager / HTTP settings UI",
+      "esp_claw": "claw_skill / cap_boards / HTTP UI",
+      "backend": "LittleFS + a small HTTP server later",
+      "status": "planned",
+      "notes": "ESP-Claw wants FATFS SYSTEM/DATA partitions; Pico will use LittleFS."
+    }
+  ]
+}
